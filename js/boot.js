@@ -15,8 +15,19 @@ var head;
 var body;
 var rightArm;
 var leftArm;
-var thigh;
-var leg;
+var rightThigh;
+var leftThigh;
+var rightLeg;
+var leftLeg;
+
+var leftKneeJoint;
+var rightKneeJoint;
+var rightShoulderJoint;
+var leftShoulderJoint;
+var rightHipJoint;
+var rightHipJoint;
+var leftHipJoint;
+var neckJoint;
 
 var QKey;
 var WKey;
@@ -26,6 +37,10 @@ var PKey;
 var bestDistanceText1;
 var totalDistanceText1;
 var keystateText1;
+var bestDistanceText2;
+var totalDistanceText2;
+var keystateText2;
+var keyState='';
 
 var l_kneeAngle = 0.175, r_kneeAngle = 0.175;
 var l_hipAngle = -0.25, r_hipAngle = 0.5;
