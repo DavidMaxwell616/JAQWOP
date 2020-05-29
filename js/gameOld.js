@@ -135,20 +135,6 @@ function translateBody(dx, dy) {
     });
 }
 
-var timestep = 60;
-var freq = 1/timestep;
-var gravity = new b2Vec2(0, -200);
-var world = new b2World(gravity, true);
-var worldWidth = 500;
-var worldHeight = 250;
-var environment = initWalls(world,worldWidth,worldHeight,24);
-var fakeWorld = undefined;
-
-var distData = [];
-var walkData = [];
-var stepData = [];
-var recordLoopId = undefined;
-
 function xToWorld(x) {
     return worldWidth*x/cWidth;
 }

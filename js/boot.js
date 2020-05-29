@@ -13,20 +13,32 @@ var joint = {};
 var body = {};
 var head;
 var body;
-var rightArm;
+var rightLowerArm;
+var rightUpperArm;
 var leftArm;
 var rightThigh;
 var leftThigh;
 var rightLeg;
 var leftLeg;
+var leftFoot;
+var rightFoot;
+var QKey;
+var WKey;
+var OKey;
+var PKey;
 
+var leftAnkleJoint;
 var leftKneeJoint;
-var rightKneeJoint;
-var rightShoulderJoint;
-var leftShoulderJoint;
-var rightHipJoint;
-var rightHipJoint;
 var leftHipJoint;
+var leftShoulderJoint;
+var leftElbowJoint;
+
+var rightAnkleJoint;
+var rightKneeJoint;
+var rightHipJoint;
+var rightShoulderJoint;
+var rightElbowJoint;
+
 var neckJoint;
 
 var QKey;
@@ -48,8 +60,11 @@ var l_hip_rotate_speed = 3;
 var r_hip_rotate_speed = 3;
 var l_knee_rotate_speed = 3;
 var r_knee_rotate_speed = 3;
-var hipLimits = [-1,1];
-var kneeLimits = [-0.25,1];
+var hipLimits = [-20,20];
+var kneeLimits = [-20,20];
+var ankleLimits = [-20,20];
+var elbowLimits = [-20,20];
+var shoulderLimits = [-20,20];
 
 var elapsedTime = 0.0;
 var totalDistTraveled = 0.0;
@@ -78,3 +93,23 @@ var stepDistances = [];
 var deathCount = 0;
 var scoreCheckpointDist = 2;
 var scorePenaltyDist = 2;
+
+var QPressed=false;
+var WPressed=false;
+var OPressed=false;
+var PPressed = false;
+
+var headStartY = 150;
+var headStartX = 300;
+
+var timestep = 60;
+var freq = 1/timestep;
+
+var worldWidth = 500;
+var worldHeight = 250;
+var fakeWorld = undefined;
+
+var distData = [];
+var walkData = [];
+var stepData = [];
+var recordLoopId = undefined;
