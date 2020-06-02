@@ -63,8 +63,8 @@ var r_knee_rotate_speed = 3;
 var hipLimits = [-20,20];
 var kneeLimits = [-20,20];
 var ankleLimits = [-20,20];
-var elbowLimits = [-20,20];
-var shoulderLimits = [-20,20];
+var elbowLimits = [0,40];
+var shoulderLimits = [-50,50];
 
 var elapsedTime = 0.0;
 var totalDistTraveled = 0.0;
