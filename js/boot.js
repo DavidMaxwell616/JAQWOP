@@ -99,8 +99,8 @@ var WPressed=false;
 var OPressed=false;
 var PPressed = false;
 
-var headStartY = 150;
-var headStartX = 300;
+var headStartY = 195;
+var headStartX = 100;
 
 var timestep = 60;
 var freq = 1/timestep;

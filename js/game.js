@@ -71,8 +71,8 @@ function create() {
   //bodyA, bodyB, ax, ay, bx, by, motorSpeed, motorTorque, motorEnabled, lowerLimit, upperLimit, limitEnabled
   leftAnkleJoint = game.physics.box2d.revoluteJoint(leftFoot, leftLeg, -9,-10,5,20, 0, 0, true, ankleLimits[0], ankleLimits[1], true);
   rightAnkleJoint = game.physics.box2d.revoluteJoint(rightFoot, rightLeg, -9,-10,5,20, 100, 0, true, ankleLimits[0], ankleLimits[1], true);
-  leftKneeJoint = game.physics.box2d.revoluteJoint(leftThigh, leftLeg, 0,10,-8,-40, 0, 0, true, kneeLimits[0], kneeLimits[1], true);
-  rightKneeJoint = game.physics.box2d.revoluteJoint(rightThigh, rightLeg, 0,10,-8,-40, 0,0, true, kneeLimits[0], kneeLimits[1], true);
+  leftKneeJoint = game.physics.box2d.revoluteJoint(leftThigh, leftLeg, -10,10,-8,-40, 0, 0, true, kneeLimits[0], kneeLimits[1], true);
+  rightKneeJoint = game.physics.box2d.revoluteJoint(rightThigh, rightLeg, -10,10,-8,-40, 0,0, true, kneeLimits[0], kneeLimits[1], true);
   rightShoulderJoint = game.physics.box2d.revoluteJoint(body,rightUpperArm, 0,-40,4,-20, 0, 0, true, shoulderLimits[0], shoulderLimits[1], true);
   leftShoulderJoint = game.physics.box2d.revoluteJoint(body,leftUpperArm, 0,-40,4,-20, 0, 0, true, shoulderLimits[0], shoulderLimits[1], true);
   leftElbowJoint = game.physics.box2d.revoluteJoint(leftLowerArm, leftUpperArm, -15,-35,0,25, 0, 0, true, elbowLimits[0], elbowLimits[1], true);
@@ -85,15 +85,16 @@ function create() {
   //rightUpperArm.visible = false;
   //rightLowerArm.visible = false;
   leftFoot.body.setCollisionMask(1);
-  leftUpperArm.body.setCollisionMask(2);
-  leftLowerArm.body.setCollisionMask(2);
+  leftUpperArm.body.setCollisionMask(1);
+  leftLowerArm.body.setCollisionMask(1);
   leftLeg.body.setCollisionMask(1);
   leftThigh.body.setCollisionMask(1);
   rightFoot.body.setCollisionMask(2);
   rightUpperArm.body.setCollisionMask(2);
   rightLowerArm.body.setCollisionMask(2);
-  rightLeg.body.setCollisionMask(1);
-  rightThigh.body.setCollisionMask(1);
+  rightLeg.body.setCollisionMask(2);
+  rightThigh.body.setCollisionMask(2);
+ // body.body.setCollisionMask(4);
   // lockRevoluteJoint(leftKneeJoint);
   // lockRevoluteJoint(rightKneeJoint);
   // lockRevoluteJoint(leftHipJoint);
@@ -126,7 +127,7 @@ function create() {
  floor.static = true;
  floor.setPolygon( vertices );
  floor.setCollisionMask(3);
-
+ 
   QKey = game.input.keyboard.addKey(Phaser.Keyboard.Q);
   WKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
   OKey = game.input.keyboard.addKey(Phaser.Keyboard.O);
