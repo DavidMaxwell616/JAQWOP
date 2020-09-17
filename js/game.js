@@ -1,52 +1,47 @@
 
-var   b2Vec2 = Box2D.Common.Math.b2Vec2
-     , b2BodyDef = Box2D.Dynamics.b2BodyDef
-     , b2Body = Box2D.Dynamics.b2Body
-     , b2FixtureDef = Box2D.Dynamics.b2FixtureDef
-     , b2Fixture = Box2D.Dynamics.b2Fixture
-     , b2World = Box2D.Dynamics.b2World
-     , b2MassData = Box2D.Collision.Shapes.b2MassData
-     , b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape
-     , b2CircleShape = Box2D.Collision.Shapes.b2CircleShape
-     , b2Shape = Box2D.Collision.Shapes.b2Shape
-     , b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef
-     , b2WeldJointDef = Box2D.Dynamics.Joints.b2WeldJointDef
-     , b2FilterData = Box2D.Dynamics.b2FilterData
-     , b2ContactListener = Box2D.Dynamics.b2ContactListener;
+var game = new Phaser.Game(500, 420, Phaser.AUTO, 'phaser-example', 
+{preload: preload, create: create, update: update });
 
-var CANVAS_WIDTH = 800, CANVAS_HEIGHT = 500, SCALE = 30;
-var canv = document.getElementById('canvas');
-var ctx = canv.getContext('2d');
-var cWidth = canv.width = CANVAS_WIDTH;
-var cHeight = canv.height = CANVAS_HEIGHT;
-var mainLoopPaused = false;
 
-min = Math.min;
-max = Math.max;
-round = Math.round;
-floor = Math.floor;
-random = Math.random;
-cos = Math.cos;
-sin = Math.sin;
-abs = Math.abs;
-pow = Math.pow;
-sqrt = Math.sqrt;
-PI = Math.PI;
+function create() {
 
-var rightArmImage = new Image();
-rightArmImage.src = "assets/images/jackrarm.png";
-var leftArmImage = new Image();
-leftArmImage.src = "assets/images/jacklarm.png";
-var bodyImage = new Image();
-bodyImage.src = "assets/images/jackbody.png";
-var thighImage = new Image();
-thighImage.src = "assets/images/jackthigh.png";
-var legImage = new Image();
-legImage.src = "assets/images/jackleg.png";
-var headImage = new Image();
-headImage.src = "assets/images/jackhead.png";
-var bkgdImage = new Image();
-bkgdImage.src = "assets/images/background.JPG";
+canv = document.getElementById('canvas');
+ctx = canv.getContext('2d');
+cWidth = canv.width = CANVAS_WIDTH;
+cHeight = canv.height = CANVAS_HEIGHT
+
+environment = initWalls(world,worldWidth,worldHeight,24);
+ctx.font = '20pt Calibri';
+ctx.fillStyle = 'black';
+
+ctx.fillText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m',50,30);
+// ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
+ctx.fillText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m',50,60);
+// ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
+ctx.fillText('Keystate: ' + action_strings[keyState],50,90);
+
+ctx.fillStyle = 'white';
+
+ctx.fillText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m', 48, 28);
+// ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
+ctx.fillText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m', 48, 58);
+// ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
+ctx.fillText('Keystate: ' + action_strings[keyState], 48, 88);
+
+// ctx.fillText('PctErr: ' + Math.round(100*pctErr)/100,100,200);
+
+if (aimode && showAIDetails) {
+    ctx.fillText('Iterations: ' + iterations,100,200);
+    ctx.font = '12pt Calibri';
+    ctx.fillStyle = 'black';
+    ACTIONS.forEach(function(a,i) {
+        ctx.fillText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
+    });
+}
+
+ctx.restore();
+resetRunner();
+}
 
 function createBall(world, x, y, radius, fixed, density) {
 
@@ -71,7 +66,7 @@ function createBall(world, x, y, radius, fixed, density) {
 }
 
 function createPolygon(world, x, y, points, fixed, density) {
-
+  
     var bodyDef = new b2BodyDef;
     var fixDef = new b2FixtureDef;
 
@@ -80,19 +75,19 @@ function createPolygon(world, x, y, points, fixed, density) {
     fixDef.restitution = 1;
 
     bodyDef.type = fixed ? b2Body.b2_staticBody : b2Body.b2_dynamicBody;
-
+  
     fixDef.shape = new b2PolygonShape;
     fixDef.shape.SetAsArray(
-        points.map( function (point) {
-            return new b2Vec2(point.x, point.y);
+      points.map( function (point) {
+        return new b2Vec2(point.x, point.y);
         })
     );
 
     bodyDef.position.x = x;
     bodyDef.position.y = y;
-
+  
     world.CreateBody(bodyDef).CreateFixture(fixDef);
-    return world.GetBodyList();
+     return world.GetBodyList();
 }
 
 function createBox(world, x, y, width, height, r, fixed, density) {
@@ -101,15 +96,16 @@ function createBox(world, x, y, width, height, r, fixed, density) {
             {'x':width/2, 'y':-height/2},
             {'x':width/2, 'y':height/2},
             {'x':-width/2, 'y':height/2}];
-        return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density);
+             return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density);
     } else {
-        var cosr = cos(r), sinr = sin(r);
+        var cosr = Math.cos(r);
+        var sinr = Math.sin(r);
         var dx = width/2, dy = height/2;
         vtx = [ {'x':-dx*cosr+dy*sinr, 'y':-dx*sinr-dy*cosr},
             {'x':dx*cosr+dy*sinr, 'y':dx*sinr-dy*cosr},
             {'x':dx*cosr-dy*sinr, 'y':dx*sinr+dy*cosr},
             {'x':-dx*cosr-dy*sinr, 'y':-dx*sinr+dy*cosr}];
-        return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density);
+            return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density);
     }
 }
 
@@ -134,22 +130,6 @@ function translateBody(dx, dy) {
         body[elem].SetType(b2Body.b2_dynamicBody);
     });
 }
-
-var timestep = 60;
-var freq = 1/timestep;
-var gravity = new b2Vec2(0, -200);
-var world = new b2World(gravity, true);
-var worldWidth = 500;
-var worldHeight = 250;
-var environment = initWalls(world,worldWidth,worldHeight,24);
-var fakeWorld = undefined;
-const startX = 80;
-const startY = 160;
-
-var distData = [];
-var walkData = [];
-var stepData = [];
-var recordLoopId = undefined;
 
 function xToWorld(x) {
     return worldWidth*x/cWidth;
@@ -212,68 +192,7 @@ function hipAtLimit(hipJoint) {
     }
 }
 
-var aimode = false;
-var showAIDetails = false;
-var drawWorld = true;
-var recordingSteps = false;
 
-var init = false;
-var keyMasks = {q:1,w:2,o:4,p:8};
-var keyState = 0;
-var keyEventCodes = {80:'p',79:'o',87:'w',81:'q',32:' '};
-var action_strings = {0:' ',1:'Q',2:'W',4:'O',6:'WO',8:'P',9:'QP'};
-var maintainLeftHipStability = true;
-var maintainLeftKneeStability = true;
-var maintainRightHipStability = true;
-var maintainRightKneeStability = true;
-
-var joint = {};
-var body = {};
-
-var l_kneeAngle = 0.175, r_kneeAngle = 0.175;
-var l_hipAngle = -0.25, r_hipAngle = 0.5;
-var l_hip_rotate_speed = 3;
-var r_hip_rotate_speed = 3;
-var l_knee_rotate_speed = 3;
-var r_knee_rotate_speed = 3;
-var hipLimits = [-1,1];
-var kneeLimits = [-0.25,1];
-
-var elapsedTime = 0.0;
-var totalDistTraveled = 0.0;
-var farthestDistTraveled = 0.0;
-var curX = 0.0
-var requestTeleport = false;
-var curVelX = 0.0;
-var prevVelX = 0.0;
-
-var autoReset = true;
-var requestReset = false;
-var respawning = false;
-var walkDelay = false;
-
-var legalKeyStates = [true,true,true,false,true,false,true,false,true,
-                    true,false,false,false,false,false,false];
-
-var hipJointAngle = 0.0;
-var prevHipJointAngle = 0.0;
-var step_phase = [false,false];
-var stepBeginAngle = NaN;
-var stepBackLeg = undefined;
-var stepForwardLeg = undefined;
-var stepBackJoint = undefined;
-var totalStepsTraveled = 0;
-var lastStepX = 0;
-var stepDistances = [];
-
-var deathCount = 0;
-var scoreCheckpointDist = 2;
-var scorePenaltyDist = 2;
-
-var qscores = { 0:0, 1:0, 2:0, 4:0, 6:0, 8:0, 9:0 };
-var var_act = [0,0,0,0,0,0,0];
-var var_pre = [0,0,0,0,0,0,0];
-var var_err = [0,0,0,0,0,0,0];
 
 document.onkeydown = function(event) {
     var c = keyEventCodes[event.keyCode];
@@ -419,7 +338,7 @@ function updateKeyState(nextState) {
     keyState = nextState;
 }
 
-var listener = new b2ContactListener;
+
 listener.BeginContact = function(contact) {
     /*
     body_A = contact.GetFixtureA().GetBody();
@@ -497,18 +416,18 @@ function resetRunner() {
     l_hipAngle = -0.25, r_hipAngle = 0.5;
 
     init = true;
-
+  
     // Create all body parts
     const scale = .5;
     var r_arm = createBox(world, startX-10, startY-34, 40, 8, 0, false, 0.1);
     var torso = createBox(world, startX-16, startY-92, 32, 70, 0, false, 5);
     var head = createBall(world, startX, startY+10, 25, false, 0.1);
-    var ul_leg = createBox(world,startX-2,startY-126,10,40,PI/6,false,10);
-    var ll_leg = createBox(world,startX-2,startY -144,10,40,-PI/6,false,10);
-    var ur_leg = createBox(world,startX-2,startY-116,10,40,PI/6,false,10);
-    var lr_leg = createBox(world,startX-2,16,10,40,-PI/6,false,10);
+    var ul_leg = createBox(world,startX-2,startY-126,10,40,Math.PI/6,false,10);
+    var ll_leg = createBox(world,startX-2,startY -144,10,40,-Math.PI/6,false,10);
+    var ur_leg = createBox(world,startX-2,startY-116,10,40,Math.PI/6,false,10);
+    var lr_leg = createBox(world,startX-2,16,10,40,-Math.PI/6,false,10);
     var l_arm = createBox(world, startX-48, startY-34, 40, 8, 0, false, 0.1);
-
+  
     curVelX = 0.0;
     // var prevVelX = 0.0;
 
@@ -655,7 +574,7 @@ function setFilterGroup(elems, fIndex) {
 function getHipBaseX() {
     var theta = body.torso.GetAngle();
     var x = body.torso.GetPosition().x;
-    return x - 35*sin(theta);
+    return x - 35*Math.sin(theta);
 }
 
 function handleInput() {
@@ -746,12 +665,12 @@ function getFootY(foot) {
 
 function getLeftFootY(bd) {
     bd = (bd==undefined) ? body : bd;
-    return bd.ll_leg.GetPosition().y - (20 * cos(bd.ll_leg.GetAngle()));
+    return bd.ll_leg.GetPosition().y - (20 * Math.cos(bd.ll_leg.GetAngle()));
 }
 
 function getRightFootY(bd) {
     bd = (bd==undefined) ? body : bd;
-    return bd.lr_leg.GetPosition().y - (20 * cos(bd.lr_leg.GetAngle()));
+    return bd.lr_leg.GetPosition().y - (20 * Math.cos(bd.lr_leg.GetAngle()));
 }
 
 function getFootX(foot) {
@@ -760,7 +679,7 @@ function getFootX(foot) {
 
 function getLeftFootX(bd) {
     bd = (bd==undefined) ? body : bd;
-    return bd.ll_leg.GetPosition().x + (20 * sin(bd.ll_leg.GetAngle()));
+    return bd.ll_leg.GetPosition().x + (20 * Math.sin(bd.ll_leg.GetAngle()));
 }
 
 function getRightFootX(bd) {
@@ -776,7 +695,7 @@ function rotateAndPaintImage(context, image, angleInRad, positionX, positionY, a
 }
 function drawCircle(x, y, radius) {
     ctx.beginPath();
-    ctx.arc(x,y,radius, 0, 2 * PI, false);
+    ctx.arc(x,y,radius, 0, 2 * Math.PI, false);
     ctx.fillStyle = '#FFF3C3';
     ctx.fill();
     ctx.lineWidth = 5;
@@ -818,7 +737,7 @@ function draw(node) {
         var shapeType = shape.GetType();
         if (node.GetUserData() == 'head') {
             ctx.beginPath();
-            ctx.arc(xToCanvas(pos.x), yToCanvas(pos.y), 40, 0, 2 * PI, false);
+            ctx.arc(xToCanvas(pos.x), yToCanvas(pos.y), 40, 0, 2 * Math.PI, false);
             ctx.fillStyle = '#FFF3C3';
             ctx.fill();
             ctx.lineWidth = 5;
@@ -831,7 +750,7 @@ function draw(node) {
 
             var vtx = shape.m_vertices;
             var r = node.GetAngle();
-            var sinr = sin(r), cosr = cos(r);
+            var sinr = Math.sin(r), cosr = Math.cos(r);
             var x0 = (vtx[0].x * cosr - vtx[0].y * sinr), y0 = (vtx[0].x * sinr + vtx[0].y * cosr);
 
             ctx.moveTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
@@ -877,11 +796,11 @@ function record() {
     stepData.push([stateVector(s),keyState])
 }
 
-function mainLoop() {
+function update() {
 
     if (!mainLoopPaused) {
         ctx.clearRect(0, 0, cWidth, cHeight);
-        ctx.drawImage(bkgdImage, 0, 0, cWidth, cHeight*1.25);
+        ctx.drawImage(background, 0, 0, cWidth, cHeight*1.25);
         var node = world.GetBodyList();
         if (drawWorld) {
             while (node.GetNext() !== null) {
@@ -909,7 +828,7 @@ function mainLoop() {
         var newX = getHipBaseX();
         var dx = (newX - curX)/25
         totalDistTraveled += dx;
-        farthestDistTraveled = max(farthestDistTraveled,totalDistTraveled);
+        farthestDistTraveled = Math.max(farthestDistTraveled,totalDistTraveled);
         curX = newX;
         prevVelX = curVelX;
         curVelX = dx/freq;
@@ -1018,34 +937,7 @@ function mainLoop() {
 
 
 
-        ctx.font = '20pt Calibri';
-        ctx.fillStyle = 'black';
-        
-        ctx.fillText('Best Distance: ' + round(farthestDistTraveled) + ' m',50,30);
-        // ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
-        ctx.fillText('Total Distance: ' + round(totalDistTraveled) + ' m',50,60);
-        // ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
-        ctx.fillText('Keystate: ' + action_strings[keyState],50,90);
-
-        ctx.fillStyle = 'white';
-
-        ctx.fillText('Best Distance: ' + round(farthestDistTraveled) + ' m', 48, 28);
-        // ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
-        ctx.fillText('Total Distance: ' + round(totalDistTraveled) + ' m', 48, 58);
-        // ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
-        ctx.fillText('Keystate: ' + action_strings[keyState], 48, 88);
-
-        // ctx.fillText('PctErr: ' + Math.round(100*pctErr)/100,100,200);
-
-        if (aimode && showAIDetails) {
-            ctx.fillText('Iterations: ' + iterations,100,200);
-            ctx.font = '12pt Calibri';
-            ctx.fillStyle = 'black';
-            ACTIONS.forEach(function(a,i) {
-                ctx.fillText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
-            });
-        }
-        ctx.restore();
+ 
 
         if (body.head.GetPosition().y < 75 && aimode) {
             if (!fallen) {
@@ -1090,8 +982,8 @@ function activateWalkDelay() {
     },1000);
 }
 
-setInterval(mainLoop,1000*freq);
-resetRunner();
+//setInterval(mainLoop,1000*freq);
+
 
 function center_of_mass(body) {
 

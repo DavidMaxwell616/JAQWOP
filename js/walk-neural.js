@@ -206,7 +206,7 @@ function loadDatasets(qtable,nnetwork) {
 var features = [];
 initFeatures();
 var RESOLUTION = 16;
-var SQRTRES = sqrt(RESOLUTION);
+var SQRTRES = Math.sqrt(RESOLUTION);
 
 /**
   Initializes all of the features.
