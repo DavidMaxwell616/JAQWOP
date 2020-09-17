@@ -1,15 +1,19 @@
-<html>
 
-<head>
-  <script src="js/phaser.min.js"></script>
-  <script src="js/box2d-plugin-full.min.js"></script>
-  <script src="js/boot.js"></script>
-  <script src="js/preload.js"></script>
-  <script src="js/game.js"></script>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+    <script type="text/javascript" src="./js/Box2d-min.js"></script>
+    
 </head>
-
 <body>
-  <div id="game"></div>
-</body>
+    <canvas id="canvas" width="1024" height="600"></canvas>
+    <script type="text/javascript" src="./js/game.js"></script>
+    <script type="text/javascript" src="./js/neuralnet.js"></script>
+    <script type="text/javascript" src="./js/walk-neural.js"></script>
+<div style="text-align:left;">
+  <button onclick="handleQPressed()">Q</button>
+  <button onclick="handleWPressed()">W</button>
+ <button onclick="handleOPressed()">O</button>
+  <button onclick="handlePPressed()">P</button>
+ </div>
 
-</html>
+
+</body></html>
