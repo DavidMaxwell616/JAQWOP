@@ -21,42 +21,44 @@ var cWidth;
 var cHeight;
 var mainLoopPaused = false;
 var listener = new b2ContactListener;
+var debugDraw = true;
 
 var timestep = 60;
 var freq = 1/timestep;
 var gravity = new b2Vec2(0, -200);
 var world = new b2World(gravity, true);
+
 var worldWidth = 500;
 var worldHeight = 250;
 var environment;
 var fakeWorld = undefined;
-const startX = 80;
-const startY = 160;
+const startX = CANVAS_WIDTH/2;
+const startY = CANVAS_HEIGHT/2;
 
 var distData = [];
 var walkData = [];
 var stepData = [];
 var recordLoopId = undefined;
 
-
-var rightArmImage;
-var leftarmImage;
+var pctErr = 1;
+var rightArm;
+var leftarm;
 var bodyImage;
-var thighImage;
-var legImage;
-var headImage;
+var thigh;
+var leg;
+var head;
 var background;
 
 var aimode = false;
 var showAIDetails = false;
 var drawWorld = true;
 var recordingSteps = false;
-
+var graphics;
 var init = false;
-var keyMasks = {q:1,w:2,o:4,p:8};
-var keyState = 0;
-var keyEventCodes = {80:'p',79:'o',87:'w',81:'q',32:' '};
-var action_strings = {0:' ',1:'Q',2:'W',4:'O',6:'WO',8:'P',9:'QP'};
+// var keyMasks = {q:1,w:2,o:4,p:8};
+var keyState = '';
+// var keyEventCodes = {80:'p',79:'o',87:'w',81:'q',32:' '};
+// var action_strings = {0:' ',1:'Q',2:'W',4:'O',6:'WO',8:'P',9:'QP'};
 var maintainLeftHipStability = true;
 var maintainLeftKneeStability = true;
 var maintainRightHipStability = true;
@@ -86,7 +88,7 @@ var autoReset = true;
 var requestReset = false;
 var respawning = false;
 var walkDelay = false;
-
+var bmd;
 var legalKeyStates = [true,true,true,false,true,false,true,false,true,
                     true,false,false,false,false,false,false];
 
@@ -109,3 +111,19 @@ var qscores = { 0:0, 1:0, 2:0, 4:0, 6:0, 8:0, 9:0 };
 var var_act = [0,0,0,0,0,0,0];
 var var_pre = [0,0,0,0,0,0,0];
 var var_err = [0,0,0,0,0,0,0];
+
+var bestDistText = [];
+var timeText = [];
+var totalDistText = [];
+var velocityText = [];
+var KeyStateText=[];
+var PctErrText = [];
+var IterationsText;
+var qText;
+
+var Qkey;
+var Wkey;
+var OKey;
+var PKey;
+var SpaceKey;
+

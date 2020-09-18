@@ -6,22 +6,15 @@ function preload() {
     fill: '#ffffff',
   });
   
-  
-rightArmImage = new Image();
-rightArmImage.src = "assets/images/jackrarm.png";
-leftArmImage = new Image();
-leftArmImage.src = "assets/images/jacklarm.png";
-bodyImage = new Image();
-bodyImage.src = "assets/images/jackbody.png";
-thighImage = new Image();
-thighImage.src = "assets/images/jackthigh.png";
-legImage = new Image();
-legImage.src = "assets/images/jackleg.png";
-headImage = new Image();
-headImage.src = "assets/images/jackhead.png";
-background = new Image();
-background.src = "assets/images/background.JPG";
-
+this.load.path = '../assets/images/';
+  this.load.image('background', 'background.JPG');
+  this.load.image('maxxdaddy', 'maxxdaddy.gif');
+  this.load.image('rightArm', 'jackrarm.png');
+  this.load.image('leftArm', 'jacklarm.png');
+  this.load.image('bodyImage', 'jackbody.png');
+  this.load.image('thigh', 'jackthigh.png');
+  this.load.image('leg', 'jackleg.png');
+  this.load.image('head', 'jackhead.png');
   this.load.start();
 
 }

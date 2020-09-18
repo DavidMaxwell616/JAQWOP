@@ -1,47 +1,104 @@
 
-var game = new Phaser.Game(500, 420, Phaser.AUTO, 'phaser-example', 
-{preload: preload, create: create, update: update });
+var game = new Phaser.Game(CANVAS_WIDTH, 500, Phaser.AUTO, 'phaser-example', 
+{preload: preload, create: create, update: update});
 
 
 function create() {
+  background = game.add.image(0, 0, 'background');
+  background.anchor.setTo(0, 0);
+  background.width = CANVAS_WIDTH*1.25;
+  background.height = CANVAS_HEIGHT*1.25;
+  
+  leftArm = game.add.sprite(0, 0, 'leftArm');
+  rightArm = game.add.sprite(0, 0, 'rightArm');
+  bodyImage = game.add.sprite(0, 0, 'bodyImage');
+  thigh = game.add.sprite(0, 0, 'thigh');
+  leg = game.add.sprite(0, 0, 'leg');
+  head = game.add.sprite(0, 0, 'head');
+  leftArm.visible = false;
+  rightArm.visible = false;
+  bodyImage.visible = false;
+  thigh.visible = false;
+  leg.visible = false;
+  head.visible = false;
 
-canv = document.getElementById('canvas');
-ctx = canv.getContext('2d');
-cWidth = canv.width = CANVAS_WIDTH;
-cHeight = canv.height = CANVAS_HEIGHT
+  var font= "20pt Calibri";
+  var color = "#000000";
 
-environment = initWalls(world,worldWidth,worldHeight,24);
-ctx.font = '20pt Calibri';
-ctx.fillStyle = 'black';
+bestDistText.push(drawText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m',50,30,font,color));
+timeText.push(drawText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',300,30,font, color));
+totalDistText.push(drawText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m',50,60,font, color));
+velocityText.push(drawText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',300,60,font, color));
+KeyStateText.push(drawText('Keystate: ' + keyState,50,90,font,color));
+ 
+var color = "#ffffff";
 
-ctx.fillText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m',50,30);
-// ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
-ctx.fillText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m',50,60);
-// ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
-ctx.fillText('Keystate: ' + action_strings[keyState],50,90);
-
-ctx.fillStyle = 'white';
-
-ctx.fillText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m', 48, 28);
-// ctx.fillText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',100,100);
-ctx.fillText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m', 48, 58);
-// ctx.fillText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',100,200);
-ctx.fillText('Keystate: ' + action_strings[keyState], 48, 88);
-
-// ctx.fillText('PctErr: ' + Math.round(100*pctErr)/100,100,200);
+bestDistText.push(drawText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m',48,28,font,color));
+timeText.push(drawText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s',298,28,font, color));
+totalDistText.push(drawText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m',48,58,font, color));
+velocityText.push(drawText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',298,58,font, color));
+KeyStateText.push(drawText('Keystate: ' + keyState,48,88,font,color));
 
 if (aimode && showAIDetails) {
-    ctx.fillText('Iterations: ' + iterations,100,200);
-    ctx.font = '12pt Calibri';
-    ctx.fillStyle = 'black';
+   iterationsText = drawText('Iterations: ' + iterations,100,200,font,"#000000");
     ACTIONS.forEach(function(a,i) {
-        ctx.fillText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
+       qText = drawText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
     });
 }
 
-ctx.restore();
-resetRunner();
+QKey = game.input.keyboard.addKey(Phaser.Keyboard.Q);
+QKey.onDown.add(function(event) {
+  handleQPressed(); }, this);  
+QKey.onUp.add(function(event) {
+    handleQReleased(); }, this);  
+WKey = game.input.keyboard.addKey(Phaser.Keyboard.W);
+WKey.onDown.add(function(event) {
+handleWPressed();}, this);  
+WKey.onUp.add(function(event) {
+  handleWReleased(); }, this);  
+OKey = game.input.keyboard.addKey(Phaser.Keyboard.O);
+OKey.onDown.add(function(event) {
+  handleOPressed();}, this);  
+OKey.onUp.add(function(event) {
+    handleOReleased(); }, this);  
+PKey = game.input.keyboard.addKey(Phaser.Keyboard.P);
+PKey.onDown.add(function(event) {
+  handlePPressed();}, this);  
+PKey.onUp.add(function(event) {
+    handlePReleased(); }, this);  
+SpaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACE);
+SpaceKey.onDown.add(function(event) {
+  handleSpacePressed();}, this);
+
+  // //ctx.fillText('PctErr: ' + Math.round(100*pctErr)/100,100,200);
+environment = initWalls(world,worldWidth,worldHeight,24);
+graphics = game.add.graphics(0,0);
+
+resetJack();
 }
+
+function drawText(text, x, y, font, color) {
+  return game.add.text(x, y, text, {
+    fill: color,
+    font: font,
+  });
+}
+
+function updateStats(){
+for (let index = 0; index < 2; index++) {
+  bestDistText[index].setText('Best Distance: ' + Math.floor(farthestDistTraveled) + ' m');
+  timeText[index].setText('Time Elapsed: ' + Math.round(elapsedTime*10)/10 + ' s');
+  totalDistText[index].setText('Total Distance: ' + Math.floor(totalDistTraveled) + ' m');
+  velocityText[index].setText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s');
+  KeyStateText[index].setText('Keystate: ' + keyState);
+ }
+ if (aimode && showAIDetails) {
+  iterationsText = drawText('Iterations: ' + iterations,100,200,font,"#000000");
+   ACTIONS.forEach(function(a,i) {
+      qText = drawText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
+   });
+ }
+} 
 
 function createBall(world, x, y, radius, fixed, density) {
 
@@ -191,46 +248,18 @@ function hipAtLimit(hipJoint) {
        return 0;
     }
 }
-
-
-
-document.onkeydown = function(event) {
-    var c = keyEventCodes[event.keyCode];
-    if (c == ' ') {
-        if (aimode) {
-                advance_step();
-        } else if (elapsedTime > 1.5) {
-            resetRunner();
-        }
-    }
-    var m = keyMasks[c];
-    if (m !== undefined && legalKeyStates[keyState | m]) {
-        keyState = keyState | m;
-    }
-}
-
-function handleKeyPressed(keymask) {
-    switch(keymask) {
-        case 1: // Q
-            handleQPressed();
-        break;
-
-        case 2: // W
-            handleWPressed();
-        break;
-
-        case 4: // O
-            handleOPressed();
-        break;
-
-        case 8: // P
-            handlePPressed();
-        break;
-    }
+function handleSpacePressed(keymask) {
+ keyState = ' ';
+  if (aimode) {
+          advance_step();
+  } else if (elapsedTime > 1.5) {
+      resetJack();
+  }
 }
 
 function handleQPressed() {
-    if (maintainLeftHipStability) {
+  keyState = 'Q';
+  if (maintainLeftHipStability) {
         maintainLeftHipStability = false;
     }
     joint.l_hip.SetMotorSpeed(l_hip_rotate_speed);
@@ -238,6 +267,7 @@ function handleQPressed() {
 }
 
 function handleWPressed() {
+  keyState = 'W';
     if (maintainRightHipStability) {
         maintainRightHipStability = false;
     }
@@ -246,6 +276,7 @@ function handleWPressed() {
 }
 
 function handleOPressed() {
+  keyState = 'O';
     if (maintainLeftKneeStability || maintainRightKneeStability) {
         maintainLeftKneeStability = false;
         maintainRightKneeStability = false;
@@ -255,6 +286,7 @@ function handleOPressed() {
 }
 
 function handlePPressed() {
+  keyState = 'P';
     if (maintainRightKneeStability || maintainLeftKneeStability) {
         maintainLeftKneeStability = false;
         maintainRightKneeStability = false;
@@ -263,27 +295,8 @@ function handlePPressed() {
     joint.l_knee.SetMotorSpeed(-l_knee_rotate_speed);
 }
 
-function handleKeyReleased(keymask) {
-    switch(keymask) {
-        case 1: // Q
-            handleQReleased();
-        break;
-
-        case 2: // W
-            handleWReleased();
-        break;
-
-        case 4: // O
-            handleOReleased();
-        break;
-
-        case 8: // P
-            handlePReleased();
-        break;
-    }
-}
-
 function handleQReleased() {
+  keyState = '';
     maintainLeftHipStability = true;
     joint.l_hip.SetMotorSpeed(0);
     joint.r_hip.SetMotorSpeed(0);
@@ -292,6 +305,7 @@ function handleQReleased() {
 }
 
 function handleWReleased() {
+  keyState = '';
     maintainRightHipStability = true;
     joint.r_hip.SetMotorSpeed(0);
     joint.l_hip.SetMotorSpeed(0);
@@ -300,6 +314,7 @@ function handleWReleased() {
 }
 
 function handleOReleased() {
+  keyState = '';
     maintainLeftKneeStability = true;
     maintainRightKneeStability = true;
     joint.l_knee.SetMotorSpeed(0);
@@ -309,6 +324,7 @@ function handleOReleased() {
 }
 
 function handlePReleased() {
+  keyState = '';
     maintainLeftKneeStability = true;
     maintainRightKneeStability = true;
     joint.r_knee.SetMotorSpeed(0);
@@ -317,41 +333,6 @@ function handlePReleased() {
     r_kneeAngle = joint.r_knee.GetJointAngle();
 }
 
-document.onkeyup = function(event) {
-    var c = keyEventCodes[event.keyCode];
-    var m = keyMasks[c];
-    if (m !== undefined && legalKeyStates[keyState & ~m]) {
-        keyState = keyState & ~m;
-        handleKeyReleased(m);
-    }
-}
-
-function updateKeyState(nextState) {
-    var m = 1;
-    for (var i = 0; i < 4; i++) {
-        var delta = (nextState&m)-(keyState&m);
-        if (delta == -m) {
-            handleKeyReleased(m)
-        }
-        m *= 2;
-    }
-    keyState = nextState;
-}
-
-
-listener.BeginContact = function(contact) {
-    /*
-    body_A = contact.GetFixtureA().GetBody();
-    body_B = contact.GetFixtureB().GetBody();
-    if (body_A == environment.floor) {
-        // console.log(body_B.GetUserData() + ' is touching the floor!');
-        // body_B.ApplyImpulse(new b2Vec2(-300000,0),body_B.GetWorldCenter());
-    } else if (body_B == environment.floor) {
-        // console.log(body_A.GetUserData() + ' is touching the floor!');
-        // body_A.ApplyImpulse(new b2Vec2(-300000,0),body_A.GetWorldCenter());
-    }
-    */
-}
 listener.PreSolve = function(contact, oldManifold) {
     body_A = contact.GetFixtureA().GetBody();
     body_B = contact.GetFixtureB().GetBody();
@@ -388,7 +369,7 @@ function lockRevoluteJoint(joint,torque) {
     joint.EnableMotor(true);
 }
 
-function resetRunner() {
+function resetJack() {
 
     if (init) {
         // Has already been initialized at least once
@@ -418,7 +399,6 @@ function resetRunner() {
     init = true;
   
     // Create all body parts
-    const scale = .5;
     var r_arm = createBox(world, startX-10, startY-34, 40, 8, 0, false, 0.1);
     var torso = createBox(world, startX-16, startY-92, 32, 70, 0, false, 5);
     var head = createBall(world, startX, startY+10, 25, false, 0.1);
@@ -577,88 +557,6 @@ function getHipBaseX() {
     return x - 35*Math.sin(theta);
 }
 
-function handleInput() {
-    switch (keyState) {
-
-        case 1:
-            handleQPressed();
-        break;
-
-        case 2:
-            handleWPressed();
-        break;
-
-        case 3:
-            handleQPressed();
-            handleWPressed();
-        break;
-
-        case 4:
-            handleOPressed();
-        break;
-
-        case 5:
-            handleQPressed();
-            handleOPressed();
-        break;
-
-        case 6:
-            handleWPressed();
-            handleOPressed();
-        break;
-
-        case 7:
-            handleQPressed();
-            handleWPressed();
-            handleOPressed();
-        break;
-
-        case 8:
-            handlePPressed();
-        break;
-
-        case 9:
-            handleQPressed();
-            handlePPressed();
-        break;
-
-        case 10:
-            handleWPressed();
-            handlePPressed();
-        break;
-
-        case 11:
-            handleQPressed();
-            handleWPressed();
-            handlePPressed();
-        break;
-
-        case 12:
-            handleOPressed();
-            handlePPressed();
-        break;
-
-        case 13:
-            handleQPressed();
-            handleOPressed();
-            handlePPressed();
-        break;
-
-        case 14:
-            handleWPressed();
-            handleOPressed();
-            handlePPressed();
-        break;
-
-        case 15:
-            handleQPressed();
-            handleWPressed();
-            handleOPressed();
-            handlePPressed();
-        break;
-    }
-}
-
 function getFootY(foot) {
     return (foot.GetUserData()=='ll_leg' ? getLeftFootY() : getRightFootY());
 }
@@ -686,12 +584,19 @@ function getRightFootX(bd) {
     bd = (bd==undefined) ? body : bd;
     return bd.lr_leg.GetPosition().x + (20 * sin(bd.lr_leg.GetAngle()));
 }
-function rotateAndPaintImage(context, image, angleInRad, positionX, positionY, axisX, axisY,height,width) {
-    context.translate(positionX, positionY);
-    context.rotate(angleInRad);
-    context.drawImage(image, -axisX, -axisY,height,width);
-    context.rotate(-angleInRad);
-    context.translate(-positionX, -positionY);
+function rotateAndPaintImage(image, angleInRad, positionX, positionY, axisX, axisY,height,width) {
+  image.x +=positionX;
+    image.y +=positionY;
+    image.rotation = angleInRad;
+    image.height = height;
+    image.width = width;
+    image.x = axisX;
+    image.y = axisY;
+    // ctx.translate(positionX, positionY);
+    // ctx.rotate(angleInRad);
+    // ctx.drawImage(image, -axisX, -axisY,height,width);
+    // ctx.rotate(-angleInRad);
+    // ctx.translate(-positionX, -positionY);
 }
 function drawCircle(x, y, radius) {
     ctx.beginPath();
@@ -705,24 +610,24 @@ function drawCircle(x, y, radius) {
 function drawJack(node) {
     var pos = node.GetPosition();
 if (node.GetUserData() == 'head') {
-    rotateAndPaintImage(ctx, headImage, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 120, 120);
+    rotateAndPaintImage(head, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 120, 120);
 } else if (node.GetUserData() == 'torso') {
-    rotateAndPaintImage(ctx, bodyImage, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 60, 90, 120, 180);
+    rotateAndPaintImage(bodyImage, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 60, 90, 120, 180);
      
 } else if (node.GetUserData() == 'ur_leg') {
-        rotateAndPaintImage(ctx, thighImage, (node.GetAngle()*-1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 50, 100);
+        rotateAndPaintImage(thigh, (node.GetAngle()*-1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 50, 100);
     } else if (node.GetUserData() == 'lr_leg') {
-        rotateAndPaintImage(ctx, legImage, (node.GetAngle()*-1)+.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
+        rotateAndPaintImage(leg, (node.GetAngle()*-1)+.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
     } else if (node.GetUserData() == 'ul_leg') {
-        rotateAndPaintImage(ctx, thighImage, (node.GetAngle() * -1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y),20, 50, 50, 100);
+        rotateAndPaintImage(thigh, (node.GetAngle() * -1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y),20, 50, 50, 100);
     } else if (node.GetUserData() == 'll_leg') {
-        rotateAndPaintImage(ctx, legImage, (node.GetAngle()*-1)+.5, xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
+        rotateAndPaintImage(leg, (node.GetAngle()*-1)+.5, xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
   
         } else if (node.GetUserData() == 'r_arm') {
-            rotateAndPaintImage(ctx, rightArmImage, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 200, 80);
+            rotateAndPaintImage(rightArm, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 200, 80);
            // drawCircle(xToCanvas(pos.x) - axisX, yToCanvas(pos.y) - axisY, 20);
  } else if (node.GetUserData() == 'l_arm') {
-     rotateAndPaintImage(ctx, leftArmImage, node.GetAngle() *-1, xToCanvas(pos.x), yToCanvas(pos.y), 155, 35, 200, 80);
+     rotateAndPaintImage(leftArm, node.GetAngle() *-1, xToCanvas(pos.x), yToCanvas(pos.y), 155, 35, 200, 80);
 
     }
 }
@@ -736,36 +641,44 @@ function draw(node) {
         var shape = fList.GetShape();
         var shapeType = shape.GetType();
         if (node.GetUserData() == 'head') {
-            ctx.beginPath();
-            ctx.arc(xToCanvas(pos.x), yToCanvas(pos.y), 40, 0, 2 * Math.PI, false);
-            ctx.fillStyle = '#FFF3C3';
-            ctx.fill();
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = '#003300';
-            ctx.stroke();
+          graphics.beginFill(0xFFF3C3, 1.0);
+          graphics.drawCircle(xToCanvas(pos.x), yToCanvas(pos.y), 40);
+          graphics.endFill();
+         // graphics.lineStyle(0x003300, 5);
+
+          // ctx.beginPath();
+          //   ctx.arc(xToCanvas(pos.x), yToCanvas(pos.y), 40, 0, 2 * Math.PI, false);
+          //   ctx.fillStyle = '#FFF3C3';
+          //   ctx.fill();
+          //   ctx.lineWidth = 5;
+          //   ctx.strokeStyle = '#003300';
+          //   ctx.stroke();
         }
            
      else  {
-            ctx.beginPath();
+            //ctx.beginPath();
 
             var vtx = shape.m_vertices;
             var r = node.GetAngle();
             var sinr = Math.sin(r), cosr = Math.cos(r);
             var x0 = (vtx[0].x * cosr - vtx[0].y * sinr), y0 = (vtx[0].x * sinr + vtx[0].y * cosr);
 
-            ctx.moveTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
+            graphics.lineStyle(5, 0x003300, 1.0);
+            graphics.beginFill(0xFFF3C3, 1.0);
+            graphics.moveTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
 
             for (var i = 1; i < vtx.length; i++) {
-                ctx.lineTo(xToCanvas(pos.x + (vtx[i].x * cosr - vtx[i].y * sinr)),
+                graphics.lineTo(xToCanvas(pos.x + (vtx[i].x * cosr - vtx[i].y * sinr)),
                     yToCanvas(pos.y + (vtx[i].x * sinr + vtx[i].y * cosr)));
             }
-            ctx.lineTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
 
-            ctx.fillStyle = '#FFF3C3';
-            ctx.fill();
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = '#003300';
-            ctx.stroke();
+//            ctx.lineTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
+
+            // ctx.fillStyle = '#FFF3C3';
+            // ctx.fill();
+            // ctx.lineWidth = 5;
+            // ctx.strokeStyle = '#003300';
+            // ctx.stroke();
             if (node.GetUserData() == 'ur_leg') {
              //   console.log(r);
             }
@@ -797,14 +710,13 @@ function record() {
 }
 
 function update() {
-
     if (!mainLoopPaused) {
-        ctx.clearRect(0, 0, cWidth, cHeight);
-        ctx.drawImage(background, 0, 0, cWidth, cHeight*1.25);
-        var node = world.GetBodyList();
+         var node = world.GetBodyList();
         if (drawWorld) {
             while (node.GetNext() !== null) {
-              //  draw(node);
+              if(debugDraw)  
+                draw(node);
+              else
                 drawJack(node);
                 node = node.GetNext();
             }
@@ -817,7 +729,6 @@ function update() {
             }
         }
         world.Step(freq,2,2);
-        handleInput();
         elapsedTime += freq;
         if (requestTeleport) {
             requestTeleport = false;
@@ -832,6 +743,8 @@ function update() {
         curX = newX;
         prevVelX = curVelX;
         curVelX = dx/freq;
+        
+        updateStats();
 
         if (dx > 0) {
             scoreCheckpointDist -= dx;
@@ -903,7 +816,7 @@ function update() {
         if (step_phase[0] && step_phase[1]) {
             if (hipJointAngle*stepBeginAngle < -2.5 &&
             getFootY(stepBackLeg) < 20 &&
-            abs(body.torso.GetAngle()+0.25) < 0.4) {
+            Math.abs(body.torso.GetAngle()+0.25) < 0.4) {
 
                 var cBaseHipX = getHipBaseX();
                 var dist = cBaseHipX - lastStepX;
@@ -933,12 +846,6 @@ function update() {
             }
         }
 
-  
-
-
-
- 
-
         if (body.head.GetPosition().y < 75 && aimode) {
             if (!fallen) {
                 notifyFall(totalStepsTraveled);
@@ -961,7 +868,7 @@ function update() {
             stepBackJoint = undefined;
             stepForwardLeg = undefined;
             lastStepX = 0;
-            resetRunner();
+            resetJack();
             requestReset = false;
             respawning = true;
             deathCount++;
