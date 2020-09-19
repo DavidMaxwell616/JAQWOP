@@ -15,12 +15,15 @@ function create() {
   thigh = game.add.sprite(0, 0, 'thigh');
   leg = game.add.sprite(0, 0, 'leg');
   head = game.add.sprite(0, 0, 'head');
+  
+  if(debugDraw){
   leftArm.visible = false;
   rightArm.visible = false;
   bodyImage.visible = false;
   thigh.visible = false;
   leg.visible = false;
   head.visible = false;
+  }
 
   var font= "20pt Calibri";
   var color = "#000000";
@@ -70,7 +73,6 @@ SpaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACE);
 SpaceKey.onDown.add(function(event) {
   handleSpacePressed();}, this);
 
-  // //ctx.fillText('PctErr: ' + Math.round(100*pctErr)/100,100,200);
 environment = initWalls(world,worldWidth,worldHeight,24);
 graphics = game.add.graphics(0,0);
 
@@ -101,8 +103,6 @@ for (let index = 0; index < 2; index++) {
 } 
 
 function createBall(world, x, y, radius, fixed, density) {
-
-   // radius = 20;
 
     var bodyDef = new b2BodyDef;
     var fixDef = new b2FixtureDef;
@@ -189,21 +189,21 @@ function translateBody(dx, dy) {
 }
 
 function xToWorld(x) {
-    return worldWidth*x/cWidth;
+    return worldWidth*x/CANVAS_WIDTH;
 }
 
 function yToWorld(y) {
-    return worldHeight*(cHeight-y)/cHeight;
+    return worldHeight*(cHeight-y)/CANVAS_HEIGHT;
 }
 
 function xToCanvas(x) {
     // The x coordinate starts at 0 and ends at 500
-    return cWidth*x/worldWidth;
+    return CANVAS_WIDTH*x/worldWidth;
 }
 
 function yToCanvas(y) {
     // The y coordinate starts at 500 and ends at 0
-    return cHeight*(worldHeight-y)/worldHeight;
+    return CANVAS_HEIGHT*(worldHeight-y)/worldHeight;
 }
 
 function toCanvas(x,y) {
@@ -401,11 +401,11 @@ function resetJack() {
     // Create all body parts
     var r_arm = createBox(world, startX-10, startY-34, 40, 8, 0, false, 0.1);
     var torso = createBox(world, startX-16, startY-92, 32, 70, 0, false, 5);
-    var head = createBall(world, startX, startY+10, 25, false, 0.1);
+    var head = createBall(world, startX, startY, 25, false, 0.1);
     var ul_leg = createBox(world,startX-2,startY-126,10,40,Math.PI/6,false,10);
     var ll_leg = createBox(world,startX-2,startY -144,10,40,-Math.PI/6,false,10);
     var ur_leg = createBox(world,startX-2,startY-116,10,40,Math.PI/6,false,10);
-    var lr_leg = createBox(world,startX-2,16,10,40,-Math.PI/6,false,10);
+    var lr_leg = createBox(world,startX-2,startY -144,10,40,-Math.PI/6,false,10);
     var l_arm = createBox(world, startX-48, startY-34, 40, 8, 0, false, 0.1);
   
     curVelX = 0.0;
@@ -457,7 +457,6 @@ function resetJack() {
     l_knee_anchor.y = l_knee_anchor.y - 14.3;
     l_knee_jointDef.Initialize(ul_leg, ll_leg, l_knee_anchor);
     var l_knee_joint = world.CreateJoint(l_knee_jointDef);
-
     // Connect upper, lower right leg
     var r_knee_jointDef = new b2RevoluteJointDef();
     var r_knee_anchor = ur_leg.GetWorldCenter();
@@ -465,7 +464,7 @@ function resetJack() {
     r_knee_anchor.y = r_knee_anchor.y - 14.3;
     r_knee_jointDef.Initialize(ur_leg, lr_leg, r_knee_anchor);
     var r_knee_joint = world.CreateJoint(r_knee_jointDef);
-
+console.log(ur_leg, lr_leg, r_knee_anchor);
     // Attach left, right legs to torso
     var l_hip_jointDef = new b2RevoluteJointDef();
     var l_hip_anchor = ul_leg.GetWorldCenter();
@@ -599,13 +598,10 @@ function rotateAndPaintImage(image, angleInRad, positionX, positionY, axisX, axi
     // ctx.translate(-positionX, -positionY);
 }
 function drawCircle(x, y, radius) {
-    ctx.beginPath();
-    ctx.arc(x,y,radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle = '#FFF3C3';
-    ctx.fill();
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = '#003300';
-    ctx.stroke();
+  graphics.beginFill(0xFFF3C3, 1.0);
+  graphics.drawCircle(x, y, radius);
+  graphics.endFill();
+
 }
 function drawJack(node) {
     var pos = node.GetPosition();
@@ -644,25 +640,13 @@ function draw(node) {
           graphics.beginFill(0xFFF3C3, 1.0);
           graphics.drawCircle(xToCanvas(pos.x), yToCanvas(pos.y), 40);
           graphics.endFill();
-         // graphics.lineStyle(0x003300, 5);
-
-          // ctx.beginPath();
-          //   ctx.arc(xToCanvas(pos.x), yToCanvas(pos.y), 40, 0, 2 * Math.PI, false);
-          //   ctx.fillStyle = '#FFF3C3';
-          //   ctx.fill();
-          //   ctx.lineWidth = 5;
-          //   ctx.strokeStyle = '#003300';
-          //   ctx.stroke();
         }
            
      else  {
-            //ctx.beginPath();
-
             var vtx = shape.m_vertices;
             var r = node.GetAngle();
             var sinr = Math.sin(r), cosr = Math.cos(r);
             var x0 = (vtx[0].x * cosr - vtx[0].y * sinr), y0 = (vtx[0].x * sinr + vtx[0].y * cosr);
-
             graphics.lineStyle(5, 0x003300, 1.0);
             graphics.beginFill(0xFFF3C3, 1.0);
             graphics.moveTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
@@ -671,17 +655,9 @@ function draw(node) {
                 graphics.lineTo(xToCanvas(pos.x + (vtx[i].x * cosr - vtx[i].y * sinr)),
                     yToCanvas(pos.y + (vtx[i].x * sinr + vtx[i].y * cosr)));
             }
-
-//            ctx.lineTo(xToCanvas(pos.x + x0), yToCanvas(pos.y + y0));
-
-            // ctx.fillStyle = '#FFF3C3';
-            // ctx.fill();
-            // ctx.lineWidth = 5;
-            // ctx.strokeStyle = '#003300';
-            // ctx.stroke();
-            if (node.GetUserData() == 'ur_leg') {
-             //   console.log(r);
-            }
+            // if (node.GetUserData() == 'ur_leg') {
+            //  //   console.log(r);
+            // }
         }
     }
 }
@@ -711,6 +687,7 @@ function record() {
 
 function update() {
     if (!mainLoopPaused) {
+      graphics.clear();
          var node = world.GetBodyList();
         if (drawWorld) {
             while (node.GetNext() !== null) {

@@ -32,7 +32,7 @@ var worldWidth = 500;
 var worldHeight = 250;
 var environment;
 var fakeWorld = undefined;
-const startX = CANVAS_WIDTH/2;
+const startX = CANVAS_WIDTH*.2;
 const startY = CANVAS_HEIGHT/2;
 
 var distData = [];
