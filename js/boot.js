@@ -14,7 +14,14 @@ var   b2Vec2 = Box2D.Common.Math.b2Vec2
 , b2FilterData = Box2D.Dynamics.b2FilterData
 , b2ContactListener = Box2D.Dynamics.b2ContactListener;
 
-var CANVAS_WIDTH = 800, CANVAS_HEIGHT = 500, SCALE = 30;
+const CANVAS_WIDTH = 800, CANVAS_HEIGHT = 500, SCALE = 30;
+const CATEGORY_BODYPARTS = 0x0001;  // 0000000000000001 in binary
+const CATEGORY_GROUND = 0x0002; // 0000000000000010 in binary
+const MASK_BODYPARTS = CATEGORY_GROUND;
+const MASK_GROUND = -1; 
+const START_X = CANVAS_WIDTH*.2;
+const START_Y = CANVAS_HEIGHT*.33;
+
 var canv;
 var ctx;
 var cWidth;
@@ -32,17 +39,14 @@ var worldWidth = 500;
 var worldHeight = 250;
 var environment;
 var fakeWorld = undefined;
-const startX = CANVAS_WIDTH*.2;
-const startY = CANVAS_HEIGHT/2;
 
 var distData = [];
 var walkData = [];
 var stepData = [];
 var recordLoopId = undefined;
 
-var pctErr = 1;
-var rightArm;
-var leftarm;
+var UpperArm;
+var LowerArm;
 var bodyImage;
 var thigh;
 var leg;
@@ -75,6 +79,7 @@ var l_knee_rotate_speed = 3;
 var r_knee_rotate_speed = 3;
 var hipLimits = [-1,1];
 var kneeLimits = [-0.25,1];
+var elbowLimits = [0,1];
 
 var elapsedTime = 0.0;
 var totalDistTraveled = 0.0;
@@ -88,9 +93,6 @@ var autoReset = true;
 var requestReset = false;
 var respawning = false;
 var walkDelay = false;
-var bmd;
-var legalKeyStates = [true,true,true,false,true,false,true,false,true,
-                    true,false,false,false,false,false,false];
 
 var hipJointAngle = 0.0;
 var prevHipJointAngle = 0.0;
