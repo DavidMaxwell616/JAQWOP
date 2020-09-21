@@ -366,8 +366,8 @@ function resetJack() {
     var ll_leg = createBox(world,START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
     var ur_leg = createBox(world,START_X-2,START_Y-116,10,40,Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
     var lr_leg = createBox(world,START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ul_arm = createBox(world, START_X+140, START_Y-20, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ll_arm = createBox(world, START_X+170, START_Y-20, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
+    var ul_arm = createBox(world, START_X-15, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
+    var ll_arm = createBox(world, START_X-45, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
   
     curVelX = 0.0;
     // var prevVelX = 0.0;
@@ -405,7 +405,7 @@ function resetJack() {
     // Create left shoulder
     var l_shoulder_jointDef = new b2RevoluteJointDef();
     var l_shoulder_anchor = ul_arm.GetWorldCenter();
-    l_shoulder_anchor.x = l_shoulder_anchor.x - 30;
+    l_shoulder_anchor.x = l_shoulder_anchor.x + 10;
     l_shoulder_jointDef.Initialize(ul_arm, torso, l_shoulder_anchor);
     var l_shoulder_joint = world.CreateJoint(l_shoulder_jointDef);
 
@@ -426,7 +426,7 @@ function resetJack() {
     // Connect Left elbow
     var l_elbow_jointDef = new b2RevoluteJointDef();
     var l_elbow_anchor = ul_arm.GetWorldCenter();
-    l_elbow_anchor.x = l_elbow_anchor.x +20;
+    l_elbow_anchor.x = l_elbow_anchor.x -10;
     l_elbow_jointDef.Initialize(ul_arm, ll_arm, l_elbow_anchor);
     var l_elbow_joint = world.CreateJoint(l_elbow_jointDef);
 
@@ -477,10 +477,10 @@ function resetJack() {
     lockRevoluteJoint(r_knee_joint);
     lockRevoluteJoint(l_hip_joint);
     lockRevoluteJoint(r_hip_joint);
-    // lockRevoluteJoint(l_shoulder_joint,10000);
-    //lockRevoluteJoint(r_shoulder_joint,10000);
-    // lockRevoluteJoint(l_elbow_joint,10000);
-   //lockRevoluteJoint(r_elbow_joint,10000);
+    lockRevoluteJoint(l_shoulder_joint,8000);
+    lockRevoluteJoint(r_shoulder_joint,8000);
+    lockRevoluteJoint(l_elbow_joint,5000);
+    lockRevoluteJoint(r_elbow_joint,5000);
 
     setInterval(function() {
         if (!mainLoopPaused) {
@@ -513,6 +513,7 @@ function resetJack() {
     r_knee_joint.SetLimits(kneeLimits[0],kneeLimits[1]);
     r_elbow_joint.EnableLimit(true);
     r_elbow_joint.SetLimits(elbowLimits[0],elbowLimits[1]);
+    l_elbow_joint.EnableLimit(true);
     l_elbow_joint.SetLimits(elbowLimits[0],elbowLimits[1]);
     curX = getHipBaseX();
 }
