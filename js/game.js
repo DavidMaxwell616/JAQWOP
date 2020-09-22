@@ -8,20 +8,30 @@ function create() {
   background.width = CANVAS_WIDTH*1.25;
   background.height = CANVAS_HEIGHT*1.25;
   
-  upperArm = game.add.sprite(0, 0, 'UpperArm');
-  lowerArm = game.add.sprite(0, 0, 'LowerArm');
-  bodyImage = game.add.sprite(0, 0, 'bodyImage');
-  thigh = game.add.sprite(0, 0, 'thigh');
-  leg = game.add.sprite(0, 0, 'leg');
-  head = game.add.sprite(0, 0, 'head');
+  ur_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
+  ul_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
+  ll_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
+  lr_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
+  bodySprite = game.add.sprite(0, 0, 'bodyImage');
+  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
+  ur_legSprite = game.add.sprite(0, 0, 'thighImage');
+  ll_legSprite = game.add.sprite(0, 0, 'legImage');
+  lr_legSprite = game.add.sprite(0, 0, 'legImage');
+  lr_armSprite.depth = 10;
+  headSprite = game.add.sprite(0, 0, 'headImage');
   
   if(debugDraw){
-    upperArm.visible = false;
-    lowerArm.visible = false;
-    bodyImage.visible = false;
-    thigh.visible = false;
-    leg.visible = false;
-    head.visible = false;
+    upperArmSprite.visible = false;
+    ur_armSprite.visible = false;
+    ul_armSprite.visible = false;
+    ll_armSprite.visible = false;
+    lr_armSprite.visible = false;
+    bodySprite.visible = false;
+    ul_legSprite.visible = false;
+    ur_legSprite.visible = false;
+    ll_legSprite.visible = false;
+    lr_legSprite.visible = false;
+    headSprite.visible = false;
   }
 
   var font= "20pt Calibri";
@@ -72,10 +82,10 @@ function create() {
   SpaceKey.onDown.add(function(event) {
     handleSpacePressed();}, this);
 
-  environment = initWalls(world,worldWidth,worldHeight,24);
+  environment = initWalls(worldWidth,worldHeight,24);
   graphics = game.add.graphics(0,0);
   world.SetContactListener(listener);
-
+ 
   resetJack();
 }
 
@@ -102,7 +112,7 @@ for (let index = 0; index < 2; index++) {
  }
 } 
 
-function createBall(world, x, y, radius, fixed, density, category, mask) {
+function createBall(x, y, radius, fixed, density, collisionType) {
 
     var bodyDef = new b2BodyDef;
     var fixDef = new b2FixtureDef;
@@ -117,13 +127,13 @@ function createBall(world, x, y, radius, fixed, density, category, mask) {
 
     bodyDef.position.x = x;
     bodyDef.position.y = y;
-    fixDef.filter.categoryBits=category;
-    fixDef.filter.maskBits=mask;
+    fixDef.filter.categoryBits=collisionType.category;
+    fixDef.filter.maskBits=collisionType.mask;
     world.CreateBody(bodyDef).CreateFixture(fixDef);
     return world.GetBodyList();
 }
 
-function createPolygon(world, x, y, points, fixed, density, category, mask) {
+function createPolygon(x, y, points, fixed, density, collisionType) {
   
     var bodyDef = new b2BodyDef;
     var fixDef = new b2FixtureDef;
@@ -143,19 +153,19 @@ function createPolygon(world, x, y, points, fixed, density, category, mask) {
 
     bodyDef.position.x = x;
     bodyDef.position.y = y;
-    fixDef.filter.categoryBits=category;
-    fixDef.filter.maskBits=mask;
+    fixDef.filter.categoryBits=collisionType.category;
+    fixDef.filter.maskBits=collisionType.mask;
     world.CreateBody(bodyDef).CreateFixture(fixDef);
      return world.GetBodyList();
 }
 
-function createBox(world, x, y, width, height, r, fixed, density,category,mask) {
+function createBox(x, y, width, height, r, fixed, density,collisionType) {
   if (r == 0 || r == undefined) {
         vtx = [ {'x':-width/2, 'y':-height/2},
             {'x':width/2, 'y':-height/2},
             {'x':width/2, 'y':height/2},
             {'x':-width/2, 'y':height/2}];
-             return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density,category,mask);
+             return createPolygon(x+(width/2),y+(height/2), vtx, fixed,density,collisionType);
     } else {
         var cosr = Math.cos(r);
         var sinr = Math.sin(r);
@@ -164,19 +174,20 @@ function createBox(world, x, y, width, height, r, fixed, density,category,mask) 
             {'x':dx*cosr+dy*sinr, 'y':dx*sinr-dy*cosr},
             {'x':dx*cosr-dy*sinr, 'y':dx*sinr+dy*cosr},
             {'x':-dx*cosr-dy*sinr, 'y':-dx*sinr+dy*cosr}];
-            return createPolygon(world, x+(width/2),y+(height/2), vtx, fixed,density,category, mask);
+            return createPolygon(x+(width/2),y+(height/2), vtx, fixed,density,collisionType);
     }
 }
 
-function initWalls(world, w,h,t) {
+function initWalls(w,h,t) {
     // Create the floor
-     var floor = createBox(world, -t*2,-t/2,w,t,0,true,1,CATEGORY_GROUND, MASK_GROUND);
+    var collisionType = {category: CATEGORY_GROUND, mask: MASK_GROUND};
+     var floor = createBox(-t*2,-t/2,w,t,0,true,1,collisionType);
     floor.SetUserData('floor');
     // Create the left wall
-    var l_wall = createBox(world, -t*3,-t/2,t/2,h,0,true,1,CATEGORY_GROUND, MASK_GROUND);
+    var l_wall = createBox(-t*3,-t/2,t/2,h,0,true,1,collisionType);
     l_wall.SetUserData('l_wall');
     // Create the right wall
-    var r_wall = createBox(world, w-t/2,0,t,h,0,true,1,CATEGORY_GROUND, MASK_GROUND);
+    var r_wall = createBox(w-t/2,0,t,h,0,true,1,collisionType);
     r_wall.SetUserData('r_wall');
     return {'floor':floor, 'l_wall':l_wall, 'r_wall':r_wall};
 }
@@ -358,16 +369,17 @@ function resetJack() {
     init = true;
   
     // Create all body parts
-    var ur_arm = createBox(world, START_X-5, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var lr_arm = createBox(world, START_X+25, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var torso = createBox(world, START_X-16, START_Y-92, 32, 70, 0, false, 5,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var head = createBall(world, START_X, START_Y-5, 20, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ul_leg = createBox(world,START_X-2,START_Y-126,10,40,Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ll_leg = createBox(world,START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ur_leg = createBox(world,START_X-2,START_Y-116,10,40,Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var lr_leg = createBox(world,START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ul_arm = createBox(world, START_X-15, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
-    var ll_arm = createBox(world, START_X-45, START_Y-35, 30, 8, 0, false, 0.1,CATEGORY_BODYPARTS,MASK_BODYPARTS);
+    const collisionType = {category: CATEGORY_BODYPARTS, mask: MASK_BODYPARTS};
+    ur_arm = createBox(START_X-5, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
+    lr_arm = createBox(START_X+25, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
+    torso = createBox(START_X-16, START_Y-92, 32, 70, 0, false, 5,collisionType);
+    head = createBall(START_X, START_Y-5, 20, false, 0.1,collisionType);
+    ul_leg = createBox(START_X-2,START_Y-126,10,40,Math.PI/6,false,10,collisionType);
+    ll_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
+    ur_leg = createBox(START_X-2,START_Y-116,10,40,Math.PI/6,false,10,collisionType);
+    lr_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
+    ul_arm = createBox(START_X-15, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
+    ll_arm = createBox(START_X-45, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
   
     curVelX = 0.0;
     // var prevVelX = 0.0;
@@ -384,6 +396,19 @@ function resetJack() {
     body.ul_arm = ul_arm;
     body.ll_arm = ll_arm;
     
+    objectMap={
+      'head': headSprite,
+      'ur_arm': ur_armSprite,
+      'lr_arm': lr_armSprite,
+      'll_leg': ll_legSprite,
+      'ul_leg': ul_legSprite,
+      'lr_leg': lr_legSprite,
+      'ur_leg': ur_legSprite,
+      'torso': bodySprite,
+      'ul_arm': ul_armSprite,
+      'll_arm': ll_armSprite
+    };
+
     head.SetUserData('head');
     lr_arm.SetUserData('lr_arm');
     ur_arm.SetUserData('ur_arm');
@@ -508,7 +533,7 @@ function resetJack() {
     r_hip_joint.EnableLimit(true);
     r_hip_joint.SetLimits(hipLimits[0],hipLimits[1]);
     l_knee_joint.EnableLimit(true);
-    l_knee_joint.SetLimits(kneeLimits[0],kneeLimits[1]);    // -0.25 and 1
+    l_knee_joint.SetLimits(kneeLimits[0],kneeLimits[1]); 
     r_knee_joint.EnableLimit(true);
     r_knee_joint.SetLimits(kneeLimits[0],kneeLimits[1]);
     r_elbow_joint.EnableLimit(true);
@@ -516,6 +541,8 @@ function resetJack() {
     l_elbow_joint.EnableLimit(true);
     l_elbow_joint.SetLimits(elbowLimits[0],elbowLimits[1]);
     curX = getHipBaseX();
+
+  
 }
 
 
@@ -558,49 +585,51 @@ function getRightFootX(bd) {
     bd = (bd==undefined) ? body : bd;
     return bd.lr_leg.GetPosition().x + (20 * sin(bd.lr_leg.GetAngle()));
 }
-function rotateAndPaintImage(image, angleInRad, positionX, positionY, axisX, axisY,height,width) {
-  image.x +=positionX;
-    image.y +=positionY;
-    image.rotation = angleInRad;
-    image.height = height;
-    image.width = width;
-    image.x = axisX;
-    image.y = axisY;
-    // ctx.translate(positionX, positionY);
-    // ctx.rotate(angleInRad);
-    // ctx.drawImage(image, -axisX, -axisY,height,width);
-    // ctx.rotate(-angleInRad);
-    // ctx.translate(-positionX, -positionY);
-}
+
 function drawCircle(x, y, radius) {
   graphics.beginFill(0xFFF3C3, 1.0);
   graphics.drawCircle(x, y, radius);
   graphics.endFill();
 
 }
-function drawJack(node) {
-    var pos = node.GetPosition();
-if (node.GetUserData() == 'head') {
-    rotateAndPaintImage(head, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 120, 120);
-} else if (node.GetUserData() == 'torso') {
-    rotateAndPaintImage(bodyImage, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 60, 90, 120, 180);
-     
-} else if (node.GetUserData() == 'ur_leg') {
-        rotateAndPaintImage(thigh, (node.GetAngle()*-1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 50, 100);
-    } else if (node.GetUserData() == 'lr_leg') {
-        rotateAndPaintImage(leg, (node.GetAngle()*-1)+.5 , xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
-    } else if (node.GetUserData() == 'ul_leg') {
-        rotateAndPaintImage(thigh, (node.GetAngle() * -1)-.5 , xToCanvas(pos.x), yToCanvas(pos.y),20, 50, 50, 100);
-    } else if (node.GetUserData() == 'll_leg') {
-        rotateAndPaintImage(leg, (node.GetAngle()*-1)+.5, xToCanvas(pos.x), yToCanvas(pos.y), 20, 50, 80, 100);
-  
-        } else if (node.GetUserData() == 'r_arm') {
-            rotateAndPaintImage(rightArm, node.GetAngle() * -1, xToCanvas(pos.x), yToCanvas(pos.y), 50, 50, 200, 80);
-           // drawCircle(xToCanvas(pos.x) - axisX, yToCanvas(pos.y) - axisY, 20);
- } else if (node.GetUserData() == 'l_arm') {
-     rotateAndPaintImage(leftArm, node.GetAngle() *-1, xToCanvas(pos.x), yToCanvas(pos.y), 155, 35, 200, 80);
 
-    }
+function getBodySize(shape){
+var w2=0;
+var h2=0;
+if(shape.m_type==0) {
+    w2 = shape.m_radius * 2
+    h2 = shape.m_radius * 2
+   } 
+else {
+var minX = Math.min(...shape.m_vertices.map(a => a.x));
+var maxX = Math.max(...shape.m_vertices.map(a => a.x));
+var minY = Math.min(...shape.m_vertices.map(a => a.y));
+var maxY = Math.max(...shape.m_vertices.map(a => a.y));
+w2 = maxX-minX;
+h2 = maxY-minY;
+}
+return {'width':w2, 'height':h2};
+}
+function drawJack(node) {
+ 
+//console.log(objectMap[node.GetUserData()]);
+var bodyPart = node.GetUserData(); 
+sprite = objectMap[bodyPart];
+ if(sprite===undefined)
+ return;
+ var scale = 2.1;
+  var pos = node.GetPosition();
+  var shape = getBodySize(node.GetFixtureList().GetShape());
+  sprite.anchor.setTo(0.5, 0.5);
+  sprite.rotation = -node.GetAngle();
+  sprite.x =xToCanvas(pos.x);
+  sprite.y =yToCanvas(pos.y);
+  sprite.width = shape.width*scale;
+  sprite.height = shape.height*scale;
+  if(bodyPart=='torso'){
+  
+  }
+
 }
 function draw(node) {
 
@@ -667,10 +696,10 @@ function update() {
         if (drawWorld) {
             while (node.GetNext() !== null) {
               if(debugDraw)  
-                draw(node);
+                  draw(node);
               else
                 drawJack(node);
-                node = node.GetNext();
+              node = node.GetNext();
             }
             if (fakeWorld !== undefined && fakeWorld != world) {
                 var _node = fakeWorld.GetBodyList();
@@ -886,7 +915,7 @@ function xToWorld(x) {
 }
 
 function yToWorld(y) {
-  return worldHeight*(cHeight-y)/CANVAS_HEIGHT;
+  return worldHeight*(cHeight-y)/CANVAS_HEIGHT*-1;
 }
 
 function xToCanvas(x) {

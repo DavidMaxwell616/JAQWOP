@@ -9,12 +9,12 @@ function preload() {
 this.load.path = '../assets/images/';
   this.load.image('background', 'background.JPG');
   this.load.image('maxxdaddy', 'maxxdaddy.gif');
-  this.load.image('UpperArm', 'upperarm.png');
-  this.load.image('LowerArm', 'lowerarm.png');
+  this.load.image('UpperArmImage', 'upperarm.png');
+  this.load.image('LowerArmImage', 'lowerarm.png');
   this.load.image('bodyImage', 'jackbody.png');
-  this.load.image('thigh', 'jackthigh.png');
-  this.load.image('leg', 'jackleg.png');
-  this.load.image('head', 'jackhead.png');
+  this.load.image('thighImage', 'jackthigh.png');
+  this.load.image('legImage', 'jackleg.png');
+  this.load.image('headImage', 'jackhead.png');
   this.load.start();
 
 }

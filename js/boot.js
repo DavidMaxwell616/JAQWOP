@@ -21,14 +21,11 @@ const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = -1; 
 const START_X = CANVAS_WIDTH*.1;
 const START_Y = CANVAS_HEIGHT*.33;
+var objectMap;
 
-var canv;
-var ctx;
-var cWidth;
-var cHeight;
 var mainLoopPaused = false;
 var listener = new b2ContactListener;
-var debugDraw = true;
+var debugDraw = false;
 
 var timestep = 60;
 var freq = 1/timestep;
@@ -45,13 +42,29 @@ var walkData = [];
 var stepData = [];
 var recordLoopId = undefined;
 
-var UpperArm;
-var LowerArm;
-var bodyImage;
-var thigh;
-var leg;
-var head;
 var background;
+var ul_armSprite;
+var ur_armSprite;
+var ll_armSprite;
+var lr_armSprite;
+var bodySprite;
+var ul_legSprite;
+var ur_legSprite;
+var ll_legSprite;
+var lr_legSprite;
+var headSprite;
+
+var ur_arm;
+var lr_arm;
+var torso;
+var head;
+var ul_leg;
+var ll_leg ;
+var ur_leg ;
+var lr_leg ;
+var ul_arm ;
+var ll_arm ;
+
 
 var aimode = false;
 var showAIDetails = false;
@@ -128,4 +141,5 @@ var Wkey;
 var OKey;
 var PKey;
 var SpaceKey;
+
 
