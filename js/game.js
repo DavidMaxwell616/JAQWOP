@@ -8,18 +8,17 @@ function create() {
   background.width = CANVAS_WIDTH*1.25;
   background.height = CANVAS_HEIGHT*1.25;
   
-  ur_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
+  headSprite = game.add.sprite(0, 0, 'headImage');
+  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
+  ll_legSprite = game.add.sprite(0, 0, 'legImage');
   ul_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
   ll_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
-  lr_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
-  bodySprite = game.add.sprite(0, 0, 'bodyImage');
-  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
   ur_legSprite = game.add.sprite(0, 0, 'thighImage');
-  ll_legSprite = game.add.sprite(0, 0, 'legImage');
   lr_legSprite = game.add.sprite(0, 0, 'legImage');
-  lr_armSprite.depth = 10;
-  headSprite = game.add.sprite(0, 0, 'headImage');
-  
+  bodySprite = game.add.sprite(0, 0, 'bodyImage');
+  lr_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
+  ur_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
+
   if(debugDraw){
     upperArmSprite.visible = false;
     ur_armSprite.visible = false;
@@ -397,16 +396,16 @@ function resetJack() {
     body.ll_arm = ll_arm;
     
     objectMap={
-      'head': headSprite,
-      'ur_arm': ur_armSprite,
-      'lr_arm': lr_armSprite,
+      'ul_arm': ul_armSprite,
+      'll_arm': ll_armSprite,
       'll_leg': ll_legSprite,
       'ul_leg': ul_legSprite,
       'lr_leg': lr_legSprite,
       'ur_leg': ur_legSprite,
+      'head': headSprite,
       'torso': bodySprite,
-      'ul_arm': ul_armSprite,
-      'll_arm': ll_armSprite
+      'ur_arm': ur_armSprite,
+      'lr_arm': lr_armSprite
     };
 
     head.SetUserData('head');
@@ -612,7 +611,6 @@ return {'width':w2, 'height':h2};
 }
 function drawJack(node) {
  
-//console.log(objectMap[node.GetUserData()]);
 var bodyPart = node.GetUserData(); 
 sprite = objectMap[bodyPart];
  if(sprite===undefined)
@@ -626,10 +624,6 @@ sprite = objectMap[bodyPart];
   sprite.y =yToCanvas(pos.y);
   sprite.width = shape.width*scale;
   sprite.height = shape.height*scale;
-  if(bodyPart=='torso'){
-  
-  }
-
 }
 function draw(node) {
 
