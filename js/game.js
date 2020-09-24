@@ -8,19 +8,20 @@ function create() {
   background.width = CANVAS_WIDTH*1.25;
   background.height = CANVAS_HEIGHT*1.25;
   
-  headSprite = game.add.sprite(0, 0, 'headImage');
-  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
-  ll_legSprite = game.add.sprite(0, 0, 'legImage');
+  game.add.image(CANVAS_WIDTH-150, 0, 'maxxdaddy');
+  
   ul_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
   ll_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
-  ur_legSprite = game.add.sprite(0, 0, 'thighImage');
+  headSprite = game.add.sprite(0, 0, 'headImage');
+  ll_legSprite = game.add.sprite(0, 0, 'legImage');
+  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
   lr_legSprite = game.add.sprite(0, 0, 'legImage');
+  ur_legSprite = game.add.sprite(0, 0, 'thighImage');
   bodySprite = game.add.sprite(0, 0, 'bodyImage');
   lr_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
   ur_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
 
   if(debugDraw){
-    upperArmSprite.visible = false;
     ur_armSprite.visible = false;
     ul_armSprite.visible = false;
     ll_armSprite.visible = false;
@@ -50,13 +51,6 @@ function create() {
   velocityText.push(drawText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',298,58,font, color));
   KeyStateText.push(drawText('Keystate: ' + keyState,48,88,font,color));
 
-  if (aimode && showAIDetails) {
-    iterationsText = drawText('Iterations: ' + iterations,100,200,font,"#000000");
-      ACTIONS.forEach(function(a,i) {
-        qText = drawText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100,125,250+25*i);
-      });
-  }
-
   QKey = game.input.keyboard.addKey(Phaser.Keyboard.Q);
   QKey.onDown.add(function(event) {
     handleQPressed(); }, this);  
@@ -82,9 +76,12 @@ function create() {
     handleSpacePressed();}, this);
 
   environment = initWalls(worldWidth,worldHeight,24);
-  graphics = game.add.graphics(0,0);
-  world.SetContactListener(listener);
  
+  if(debugDraw) 
+    graphics = game.add.graphics(0,0);
+  world.SetContactListener(listener);
+  aimode=AI_MODE;
+  showAIDetails=SHOW_DEBUG;
   resetJack();
 }
 
@@ -103,12 +100,7 @@ for (let index = 0; index < 2; index++) {
   velocityText[index].setText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s');
   KeyStateText[index].setText('Keystate: ' + keyState);
  }
- if (aimode && showAIDetails) {
-  iterationsText = setText('Iterations: ' + iterations);
-   ACTIONS.forEach(function(a,i) {
-      qText = setText('Q(s,'+a+') = '+Math.round(qscores[a]*100)/100);
-   });
- }
+ 
 } 
 
 function createBall(x, y, radius, fixed, density, collisionType) {
@@ -369,17 +361,17 @@ function resetJack() {
   
     // Create all body parts
     const collisionType = {category: CATEGORY_BODYPARTS, mask: MASK_BODYPARTS};
-    ur_arm = createBox(START_X-5, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
-    lr_arm = createBox(START_X+25, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
-    torso = createBox(START_X-16, START_Y-92, 32, 70, 0, false, 5,collisionType);
-    head = createBall(START_X, START_Y-5, 20, false, 0.1,collisionType);
-    ul_leg = createBox(START_X-2,START_Y-126,10,40,Math.PI/6,false,10,collisionType);
+    ur_arm = createBox(START_X-10, START_Y-48, 10, 20, 0, false, 0.1,collisionType);
+    lr_arm = createBox(START_X-10, START_Y-85, 10, 40, 0, false, 0.1,collisionType);
+    torso = createBox(START_X-16, START_Y-92, 32, 67, 0, false, 5,collisionType);
+    head = createBall(START_X+3, START_Y-10, 20, false, 0.1,collisionType);
+    ul_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
     ll_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
-    ur_leg = createBox(START_X-2,START_Y-116,10,40,Math.PI/6,false,10,collisionType);
+    ur_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
     lr_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
-    ul_arm = createBox(START_X-15, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
-    ll_arm = createBox(START_X-45, START_Y-35, 30, 8, 0, false, 0.1,collisionType);
-  
+    ul_arm = createBox(START_X-10, START_Y-48, 10, 20, 0, false, 0.1,collisionType);
+    ll_arm = createBox(START_X-10, START_Y-85, 10, 40, 0, false, 0.1,collisionType);
+    
     curVelX = 0.0;
     // var prevVelX = 0.0;
 
@@ -429,28 +421,30 @@ function resetJack() {
     // Create left shoulder
     var l_shoulder_jointDef = new b2RevoluteJointDef();
     var l_shoulder_anchor = ul_arm.GetWorldCenter();
-    l_shoulder_anchor.x = l_shoulder_anchor.x + 10;
+    l_shoulder_anchor.x = l_shoulder_anchor.x + 5;
+    l_shoulder_anchor.y = l_shoulder_anchor.y + 14.3;
     l_shoulder_jointDef.Initialize(ul_arm, torso, l_shoulder_anchor);
     var l_shoulder_joint = world.CreateJoint(l_shoulder_jointDef);
 
     // Create right shoulder
     var r_shoulder_jointDef = new b2RevoluteJointDef();
     var r_shoulder_anchor = ur_arm.GetWorldCenter();
-    r_shoulder_anchor.x = r_shoulder_anchor.x - 10;
-     r_shoulder_jointDef.Initialize(ur_arm, torso, r_shoulder_anchor);
+    r_shoulder_anchor.x = r_shoulder_anchor.x + 5;
+    r_shoulder_anchor.y = r_shoulder_anchor.y + 14.3;
+       r_shoulder_jointDef.Initialize(ur_arm, torso, r_shoulder_anchor);
     var r_shoulder_joint = world.CreateJoint(r_shoulder_jointDef);
 
     // Connect Right elbow
     var r_elbow_jointDef = new b2RevoluteJointDef();
-    var r_elbow_anchor = ur_arm.GetWorldCenter();
-    r_elbow_anchor.x = r_elbow_anchor.x+20;
+    var r_elbow_anchor = lr_arm.GetWorldCenter();
+    r_elbow_anchor.y = r_elbow_anchor.y+25;
     r_elbow_jointDef.Initialize(ur_arm, lr_arm, r_elbow_anchor);
     var r_elbow_joint = world.CreateJoint(r_elbow_jointDef);
 
     // Connect Left elbow
     var l_elbow_jointDef = new b2RevoluteJointDef();
     var l_elbow_anchor = ul_arm.GetWorldCenter();
-    l_elbow_anchor.x = l_elbow_anchor.x -10;
+    l_elbow_anchor.y = l_elbow_anchor.y +25;
     l_elbow_jointDef.Initialize(ul_arm, ll_arm, l_elbow_anchor);
     var l_elbow_joint = world.CreateJoint(l_elbow_jointDef);
 
@@ -505,7 +499,7 @@ function resetJack() {
     lockRevoluteJoint(r_shoulder_joint,8000);
     lockRevoluteJoint(l_elbow_joint,5000);
     lockRevoluteJoint(r_elbow_joint,5000);
-
+   
     setInterval(function() {
         if (!mainLoopPaused) {
             if (maintainLeftHipStability) {
@@ -604,8 +598,8 @@ var minX = Math.min(...shape.m_vertices.map(a => a.x));
 var maxX = Math.max(...shape.m_vertices.map(a => a.x));
 var minY = Math.min(...shape.m_vertices.map(a => a.y));
 var maxY = Math.max(...shape.m_vertices.map(a => a.y));
-w2 = maxX-minX;
-h2 = maxY-minY;
+w2 = Math.floor(maxX-minX);
+h2 = Math.floor(maxY-minY);
 }
 return {'width':w2, 'height':h2};
 }
@@ -618,6 +612,7 @@ sprite = objectMap[bodyPart];
  var scale = 2.1;
   var pos = node.GetPosition();
   var shape = getBodySize(node.GetFixtureList().GetShape());
+  //console.log(bodyPart,shape.width,shape.height);
   sprite.anchor.setTo(0.5, 0.5);
   sprite.rotation = -node.GetAngle();
   sprite.x =xToCanvas(pos.x);
@@ -625,6 +620,7 @@ sprite = objectMap[bodyPart];
   sprite.width = shape.width*scale;
   sprite.height = shape.height*scale;
 }
+
 function draw(node) {
 
     var pos = node.GetPosition();
@@ -633,7 +629,6 @@ function draw(node) {
     if (fList !== null) {
 
         var shape = fList.GetShape();
-        var shapeType = shape.GetType();
         if (node.GetUserData() == 'head') {
           graphics.beginFill(0xFFF3C3, 1.0);
           graphics.drawCircle(xToCanvas(pos.x), yToCanvas(pos.y), 40);
@@ -653,9 +648,6 @@ function draw(node) {
                 graphics.lineTo(xToCanvas(pos.x + (vtx[i].x * cosr - vtx[i].y * sinr)),
                     yToCanvas(pos.y + (vtx[i].x * sinr + vtx[i].y * cosr)));
             }
-            // if (node.GetUserData() == 'ur_leg') {
-            //  //   console.log(r);
-            // }
         }
     }
 }
@@ -685,16 +677,17 @@ function record() {
 
 function update() {
     if (!mainLoopPaused) {
-      graphics.clear();
-         var node = world.GetBodyList();
-        if (drawWorld) {
-            while (node.GetNext() !== null) {
-              if(debugDraw)  
-                  draw(node);
-              else
-                drawJack(node);
-              node = node.GetNext();
-            }
+      if(debugDraw)
+        graphics.clear();
+      var node = world.GetBodyList();
+      if (drawWorld) {
+        while (node.GetNext() !== null) {
+          if(debugDraw)  
+              draw(node);
+          else
+            drawJack(node);
+          node = node.GetNext();
+        }
             if (fakeWorld !== undefined && fakeWorld != world) {
                 var _node = fakeWorld.GetBodyList();
                 while(_node.GetNext() !== null) {
@@ -725,7 +718,7 @@ function update() {
             scoreCheckpointDist -= dx;
             if (scoreCheckpointDist <= 0) {
                 if (aimode) {
-                    notifyDistTraveled();
+                    //notifyDistTraveled();
                 }
                 scoreCheckpointDist = 2;
                 scorePenaltyDist = 2;
@@ -734,7 +727,7 @@ function update() {
             scorePenaltyDist += dx;
             if (scorePenaltyDist <= 0) {
                 if (aimode) {
-                    notifyBackwardsTraveled();
+                    //notifyBackwardsTraveled();
                 }
                 scoreCheckpointDist = 2;
                 scorePenaltyDist = 2;
@@ -754,7 +747,7 @@ function update() {
                 stepForwardLeg = body.ll_leg;
                 step_phase[0] = true;
                 if (aimode) {
-                    notifyStepBegun();
+                    //notifyStepBegun();
                 }
                 if (recordingSteps) {
                     startRecording();
@@ -769,7 +762,7 @@ function update() {
                 stepForwardLeg = body.lr_leg;
                 step_phase[0] = true;
                 if (aimode) {
-                    notifyStepBegun();
+                    //notifyStepBegun();
                 }
                 if (recordingSteps) {
                     startRecording();
@@ -781,7 +774,7 @@ function update() {
         if (step_phase[0] && !step_phase[1] && hipJointAngle*prevHipJointAngle < 0) {
             step_phase[1] = true;
             if (aimode) {
-                notifyHalfStep();
+                //notifyHalfStep();
             }
             if (recordingSteps) {
                 console.log('(+) HALF STEP DETECTED');
@@ -808,7 +801,7 @@ function update() {
                 step_phase[0] = true;
                 step_phase[1] = false;
                 if (aimode) {
-                    notifyStepComplete(dist);
+                    //notifyStepComplete(dist);
                 }
 
                 if (recordingSteps) {
@@ -823,7 +816,7 @@ function update() {
 
         if (body.head.GetPosition().y < 75 && aimode) {
             if (!fallen) {
-                notifyFall(totalStepsTraveled);
+                //notifyFall(totalStepsTraveled);
             }
         }
 

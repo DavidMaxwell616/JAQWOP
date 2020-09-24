@@ -21,11 +21,13 @@ const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = -1; 
 const START_X = CANVAS_WIDTH*.1;
 const START_Y = CANVAS_HEIGHT*.33;
-var objectMap;
+const AI_MODE = false;
+const SHOW_DEBUG = false;
 
+var objectMap;
 var mainLoopPaused = false;
 var listener = new b2ContactListener;
-var debugDraw = false;
+var debugDraw = true;
 
 var timestep = 60;
 var freq = 1/timestep;
@@ -121,7 +123,8 @@ var stepDistances = [];
 var deathCount = 0;
 var scoreCheckpointDist = 2;
 var scorePenaltyDist = 2;
-
+var iterations;
+var ACTIONS = [0,1,2,4,6,8,9]
 var qscores = { 0:0, 1:0, 2:0, 4:0, 6:0, 8:0, 9:0 };
 var var_act = [0,0,0,0,0,0,0];
 var var_pre = [0,0,0,0,0,0,0];
@@ -133,7 +136,7 @@ var totalDistText = [];
 var velocityText = [];
 var KeyStateText=[];
 var PctErrText = [];
-var IterationsText;
+var iterationsText;
 var qText;
 
 var Qkey;
