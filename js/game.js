@@ -33,6 +33,8 @@ function create() {
     ur_legSprite.visible = false;
     ll_legSprite.visible = false;
     lr_legSprite.visible = false;
+    l_footSprite.visible = false;
+    r_footSprite.visible = false;
     headSprite.visible = false;
   }
 
@@ -700,7 +702,7 @@ function endRecording(save,dist) {
             .forEach(function(d) {
                 walkData.push(d);
             });
-        console.log('SAVED WALK DATA.');
+        log('SAVED WALK DATA.');
     }
     stepData = [];
 }
@@ -753,7 +755,7 @@ function update() {
             scoreCheckpointDist -= dx;
             if (scoreCheckpointDist <= 0) {
                 if (aimode) {
-                    //notifyDistTraveled();
+                    log('DistTraveled: ',totalDistTraveled);
                 }
                 scoreCheckpointDist = 2;
                 scorePenaltyDist = 2;
@@ -762,7 +764,7 @@ function update() {
             scorePenaltyDist += dx;
             if (scorePenaltyDist <= 0) {
                 if (aimode) {
-                    //notifyBackwardsTraveled();
+                    log('BackwardsTraveled',scorePenaltyDist);
                 }
                 scoreCheckpointDist = 2;
                 scorePenaltyDist = 2;
@@ -782,11 +784,11 @@ function update() {
                 stepForwardLeg = body.ll_leg;
                 step_phase[0] = true;
                 if (aimode) {
-                    //notifyStepBegun();
+                    log('StepBegun');
                 }
                 if (recordingSteps) {
                     startRecording();
-                    console.log('(+) WALK INITIATED');
+                    log('(+) WALK INITIATED');
                 }
             } else if (hipJointAngle > 1.5 && hasContact(body.ll_leg,environment.floor)) {
                 // left foot backwards
@@ -797,11 +799,11 @@ function update() {
                 stepForwardLeg = body.lr_leg;
                 step_phase[0] = true;
                 if (aimode) {
-                    //notifyStepBegun();
+                    log('StepBegun');
                 }
                 if (recordingSteps) {
                     startRecording();
-                    console.log('(+) WALK INITIATED');
+                    log('(+) WALK INITIATED');
                 }
             }
         }
@@ -809,10 +811,10 @@ function update() {
         if (step_phase[0] && !step_phase[1] && hipJointAngle*prevHipJointAngle < 0) {
             step_phase[1] = true;
             if (aimode) {
-                //notifyHalfStep();
+                log('HalfStep');
             }
             if (recordingSteps) {
-                console.log('(+) HALF STEP DETECTED');
+                log('(+) HALF STEP DETECTED');
             }
         }
 
@@ -836,11 +838,11 @@ function update() {
                 step_phase[0] = true;
                 step_phase[1] = false;
                 if (aimode) {
-                    //notifyStepComplete(dist);
+                    log('StepComplete',dist);
                 }
 
                 if (recordingSteps) {
-                    console.log('(+) STEP DETECTED: DISTANCE OF ' + dist);
+                    log('(+) STEP DETECTED: DISTANCE OF ' + dist);
                     startRecording();
                 }
 
@@ -851,8 +853,8 @@ function update() {
 
         if (body.head.GetPosition().y < 75 && aimode) {
             if (!fallen) {
-                //notifyFall(totalStepsTraveled);
-            }
+                log('Fall',totalStepsTraveled);
+      d      }
         }
 
         if (requestReset) {
@@ -862,7 +864,7 @@ function update() {
 
             if (recordingSteps) {
                 endRecording(false);
-                console.log('(-) YOU DIED.')
+                log('(-) YOU DIED.')
             }
 
             step_phase = [false,false];
@@ -893,7 +895,10 @@ function activateWalkDelay() {
 }
 
 //setInterval(mainLoop,1000*freq);
-
+function log(msg,msg2)
+{
+  iterations.push(msg+msg2);
+}
 
 function center_of_mass(body) {
 
