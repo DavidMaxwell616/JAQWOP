@@ -13,14 +13,16 @@ function create() {
   ul_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
   ll_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
   headSprite = game.add.sprite(0, 0, 'headImage');
+  l_footSprite = game.add.sprite(0, 0, 'footImage');
   ll_legSprite = game.add.sprite(0, 0, 'legImage');
-  ul_legSprite = game.add.sprite(0, 0, 'thighImage');
-  lr_legSprite = game.add.sprite(0, 0, 'legImage');
+   ul_legSprite = game.add.sprite(0, 0, 'thighImage');
+   r_footSprite = game.add.sprite(0, 0, 'footImage');
+ lr_legSprite = game.add.sprite(0, 0, 'legImage');
   ur_legSprite = game.add.sprite(0, 0, 'thighImage');
   bodySprite = game.add.sprite(0, 0, 'bodyImage');
   lr_armSprite = game.add.sprite(0, 0, 'LowerArmImage');
   ur_armSprite = game.add.sprite(0, 0, 'UpperArmImage');
-
+ 
   if(debugDraw){
     ur_armSprite.visible = false;
     ul_armSprite.visible = false;
@@ -303,12 +305,14 @@ listener.PreSolve = function(contact, oldManifold) {
     } else if (autoReset) {
         if (body_A == environment.floor) {
             if (body_B !== body.ll_leg && body_B !== body.ul_leg &&
-             body_B !== body.lr_leg && body_B !== body.ur_leg) {
+             body_B !== body.lr_leg && body_B !== body.ur_leg && 
+             body_B !== body.l_foot && body_B !== body.r_foot) {
                 requestReset = true;
             }
         } else if (body_B == environment.floor) {
             if (body_A !== body.ll_leg && body_A !== body.ul_leg &&
-             body_A !== body.lr_leg && body_A !== body.ur_leg) {
+             body_A !== body.lr_leg && body_A !== body.ur_leg && 
+             body_A !== body.l_foot && body_A !== body.r_foot) {
                 requestReset = true;
             }
         }
@@ -366,12 +370,14 @@ function resetJack() {
     torso = createBox(START_X-16, START_Y-92, 32, 67, 0, false, 5,collisionType);
     head = createBall(START_X+3, START_Y-10, 20, false, 0.1,collisionType);
     ul_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
-    ll_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
+    ll_leg = createBox(START_X-2,START_Y-144,10,40,-Math.PI/6,false,10,collisionType);
     ur_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
-    lr_leg = createBox(START_X-2,START_Y -144,10,40,-Math.PI/6,false,10,collisionType);
+    lr_leg = createBox(START_X-2,START_Y-144,10,40,-Math.PI/6,false,10,collisionType);
     ul_arm = createBox(START_X-10, START_Y-48, 10, 20, 0, false, 0.1,collisionType);
     ll_arm = createBox(START_X-10, START_Y-85, 10, 40, 0, false, 0.1,collisionType);
-    
+    l_foot = createBox(START_X-2,START_Y-144,25,10,0,false,10,collisionType);
+    r_foot = createBox(START_X-2,START_Y-144,25,10,0,false,10,collisionType);
+   
     curVelX = 0.0;
     // var prevVelX = 0.0;
 
@@ -386,6 +392,8 @@ function resetJack() {
     body.torso = torso;
     body.ul_arm = ul_arm;
     body.ll_arm = ll_arm;
+    body.r_foot = r_foot;
+    body.l_foot = l_foot;
     
     objectMap={
       'ul_arm': ul_armSprite,
@@ -397,7 +405,9 @@ function resetJack() {
       'head': headSprite,
       'torso': bodySprite,
       'ur_arm': ur_armSprite,
-      'lr_arm': lr_armSprite
+      'lr_arm': lr_armSprite,
+      'l_foot': l_footSprite,
+      'r_foot': r_footSprite
     };
 
     head.SetUserData('head');
@@ -410,6 +420,8 @@ function resetJack() {
     torso.SetUserData('torso');
     ul_arm.SetUserData('ul_arm');
     ll_arm.SetUserData('ll_arm');
+    l_foot.SetUserData('l_foot');
+    r_foot.SetUserData('r_foot');
 
     // Create neck
     var neck_jointDef = new b2WeldJointDef();
@@ -480,6 +492,22 @@ function resetJack() {
     r_hip_jointDef.Initialize(torso, ur_leg, r_hip_anchor);
     var r_hip_joint = world.CreateJoint(r_hip_jointDef);
 
+    // Create left ankle
+    var l_ankle_jointDef = new b2RevoluteJointDef();
+    var l_ankle_anchor = ll_leg.GetWorldCenter();
+    l_ankle_anchor.x = l_ankle_anchor.x - 12;
+    l_ankle_anchor.y = l_ankle_anchor.y - 20;
+    l_ankle_jointDef.Initialize(l_foot, ll_leg, l_ankle_anchor);
+    var l_ankle_joint = world.CreateJoint(l_ankle_jointDef);
+
+    // Create right ankle
+    var r_ankle_jointDef = new b2RevoluteJointDef();
+    var r_ankle_anchor = lr_leg.GetWorldCenter();
+    r_ankle_anchor.x = r_ankle_anchor.x - 12;
+    r_ankle_anchor.y = r_ankle_anchor.y- 20;
+    r_ankle_jointDef.Initialize(r_foot, lr_leg, r_ankle_anchor);
+    var r_ankle_joint = world.CreateJoint(r_ankle_jointDef);
+
     joint.neck = neck_joint;
     joint.l_shoulder = l_shoulder_joint;
     joint.l_elbow = l_elbow_joint;
@@ -489,6 +517,8 @@ function resetJack() {
     joint.r_hip = r_hip_joint;
     joint.l_knee = l_knee_joint;
     joint.r_knee = r_knee_joint;
+    joint.l_ankle = l_ankle_joint;
+    joint.r_ankle = r_ankle_joint;
 
     // Stiffen hip, arm and knee joints
     lockRevoluteJoint(l_knee_joint);
@@ -499,6 +529,8 @@ function resetJack() {
     lockRevoluteJoint(r_shoulder_joint,8000);
     lockRevoluteJoint(l_elbow_joint,5000);
     lockRevoluteJoint(r_elbow_joint,5000);
+    lockRevoluteJoint(l_ankle_joint);
+    lockRevoluteJoint(r_ankle_joint);
    
     setInterval(function() {
         if (!mainLoopPaused) {
@@ -533,6 +565,10 @@ function resetJack() {
     r_elbow_joint.SetLimits(elbowLimits[0],elbowLimits[1]);
     l_elbow_joint.EnableLimit(true);
     l_elbow_joint.SetLimits(elbowLimits[0],elbowLimits[1]);
+    r_ankle_joint.EnableLimit(true);
+    r_ankle_joint.SetLimits(ankleLimits[0],ankleLimits[1]);
+    l_ankle_joint.EnableLimit(true);
+    l_ankle_joint.SetLimits(ankleLimits[0],ankleLimits[1]);
     curX = getHipBaseX();
 
   
@@ -612,7 +648,6 @@ sprite = objectMap[bodyPart];
  var scale = 2.1;
   var pos = node.GetPosition();
   var shape = getBodySize(node.GetFixtureList().GetShape());
-  //console.log(bodyPart,shape.width,shape.height);
   sprite.anchor.setTo(0.5, 0.5);
   sprite.rotation = -node.GetAngle();
   sprite.x =xToCanvas(pos.x);

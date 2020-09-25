@@ -31,7 +31,7 @@ var debugDraw = true;
 
 var timestep = 60;
 var freq = 1/timestep;
-var gravity = new b2Vec2(0, -200);
+var gravity = new b2Vec2(0, -300);
 var world = new b2World(gravity, true);
 
 var worldWidth = 500;
@@ -54,6 +54,8 @@ var ul_legSprite;
 var ur_legSprite;
 var ll_legSprite;
 var lr_legSprite;
+var l_foot;
+var r_foot;
 var headSprite;
 
 var ur_arm;
@@ -61,12 +63,13 @@ var lr_arm;
 var torso;
 var head;
 var ul_leg;
-var ll_leg ;
-var ur_leg ;
-var lr_leg ;
-var ul_arm ;
-var ll_arm ;
-
+var ll_leg;
+var ur_leg;
+var lr_leg;
+var ul_arm;
+var ll_arm;
+var l_foot;
+var r_foot;
 
 var aimode = false;
 var showAIDetails = false;
@@ -95,6 +98,7 @@ var r_knee_rotate_speed = 3;
 var hipLimits = [-1,1];
 var kneeLimits = [-0.25,1];
 var elbowLimits = [0,1];
+var ankleLimits = [-0.25,0.25];
 
 var elapsedTime = 0.0;
 var totalDistTraveled = 0.0;

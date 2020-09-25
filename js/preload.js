@@ -15,7 +15,8 @@ this.load.path = '../assets/images/';
   this.load.image('thighImage', 'jackthigh.png');
   this.load.image('legImage', 'jackleg.png');
   this.load.image('headImage', 'jackhead.png');
-  this.load.start();
+  this.load.image('footImage', 'jackfoot.png');
+ this.load.start();
 
 }
 
