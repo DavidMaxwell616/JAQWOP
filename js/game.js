@@ -79,7 +79,7 @@ function create() {
   SpaceKey.onDown.add(function(event) {
     handleSpacePressed();}, this);
 
-  environment = initWalls(worldWidth,worldHeight,24);
+  environment = initWalls(worldWidth+50,worldHeight,24);
  
   if(debugDraw) 
     graphics = game.add.graphics(0,0);
@@ -113,8 +113,8 @@ function createBall(x, y, radius, fixed, density, collisionType) {
     var fixDef = new b2FixtureDef;
 
     fixDef.density = density==undefined ? 1 : density;
-    fixDef.friction = 5;
-    fixDef.restitution = 0.5;
+    fixDef.friction = 15;
+    fixDef.restitution = 1;
 
     bodyDef.type = fixed ? b2Body.b2_staticBody : b2Body.b2_dynamicBody;
 

@@ -20,7 +20,7 @@ const CATEGORY_GROUND = 0x0002; // 0000000000000010 in binary
 const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = -1; 
 const START_X = CANVAS_WIDTH*.1;
-const START_Y = CANVAS_HEIGHT*.33;
+const START_Y =170;
 const AI_MODE = false;
 const SHOW_DEBUG = false;
 
@@ -71,8 +71,8 @@ var ll_arm;
 var l_foot;
 var r_foot;
 
-var aimode = false;
-var showAIDetails = false;
+var aimode = true;
+var showAIDetails = true;
 var drawWorld = true;
 var recordingSteps = false;
 var graphics;
