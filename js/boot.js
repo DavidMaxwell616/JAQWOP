@@ -20,7 +20,7 @@ const CATEGORY_GROUND = 0x0002; // 0000000000000010 in binary
 const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = -1; 
 const START_X = CANVAS_WIDTH*.1;
-const START_Y =170;
+const START_Y =180;
 const AI_MODE = false;
 const SHOW_DEBUG = false;
 
