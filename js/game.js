@@ -79,8 +79,30 @@ function create() {
   SpaceKey.onDown.add(function(event) {
     handleSpacePressed();}, this);
 
-  environment = initWalls(worldWidth+50,worldHeight,24);
+  environment = initWalls();
  
+
+  Qtext = game.add.text(game.world.width-160, 40, 
+  "Q", { font: "32px Impact", fill: "#ff0044", align: "center" });
+  Qtext.inputEnabled = true;
+  Qtext.events.onInputDown.add(handleQPressed, this);
+  Wtext = game.add.text(game.world.width-120, 40, 
+  "W", { font: "32px Impact", fill: "#ff0044", align: "center" });
+  Wtext.inputEnabled = true;
+  Wtext.events.onInputDown.add(handleWPressed, this);
+  Otext = game.add.text(game.world.width-80, 40, 
+  "O", { font: "32px Impact", fill: "#ff0044", align: "center" });
+  Otext.inputEnabled = true;
+  Otext.events.onInputDown.add(handleOPressed, this);
+  Ptext = game.add.text(game.world.width-40, 40, 
+  "P", { font: "32px Impact", fill: "#ff0044", align: "center" });
+  Ptext.inputEnabled = true;
+  Ptext.events.onInputDown.add(handlePPressed, this); 
+
+
+
+ 
+
   if(debugDraw) 
     graphics = game.add.graphics(0,0);
   world.SetContactListener(listener);
@@ -113,7 +135,7 @@ function createBall(x, y, radius, fixed, density, collisionType) {
     var fixDef = new b2FixtureDef;
 
     fixDef.density = density==undefined ? 1 : density;
-    fixDef.friction = 15;
+    fixDef.friction = 1;
     fixDef.restitution = 1;
 
     bodyDef.type = fixed ? b2Body.b2_staticBody : b2Body.b2_dynamicBody;
@@ -129,12 +151,12 @@ function createBall(x, y, radius, fixed, density, collisionType) {
 }
 
 function createPolygon(x, y, points, fixed, density, collisionType) {
-  
+ 
     var bodyDef = new b2BodyDef;
     var fixDef = new b2FixtureDef;
 
     fixDef.density = density==undefined ? 1 : density;
-    fixDef.friction = 15;
+    fixDef.friction = 1;
     fixDef.restitution = 1;
 
     bodyDef.type = fixed ? b2Body.b2_staticBody : b2Body.b2_dynamicBody;
@@ -173,11 +195,19 @@ function createBox(x, y, width, height, r, fixed, density,collisionType) {
     }
 }
 
-function initWalls(w,h,t) {
-    // Create the floor
+function initWalls() {
+  var w = worldWidth;
+  var h = worldHeight;
+  var t = 24;
+     // Create the floor
     var collisionType = {category: CATEGORY_GROUND, mask: MASK_GROUND};
-     var floor = createBox(-t*2,-t/2,w,t,0,true,1,collisionType);
-    floor.SetUserData('floor');
+    var vtx = [ {'x':0, 'y':0},
+            {'x':w, 'y':0},
+            {'x':w, 'y':t},
+            {'x':0, 'y':t-15}];
+     var floor = createPolygon(0,0,vtx,true,1,collisionType);
+     floor.friction = 1;
+     floor.SetUserData('floor');
     // Create the left wall
     var l_wall = createBox(-t*3,-t/2,t/2,h,0,true,1,collisionType);
     l_wall.SetUserData('l_wall');
@@ -373,11 +403,11 @@ function resetJack() {
     head = createBall(START_X+3, START_Y-10, 20, false, 0.1,collisionType);
     ul_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
     ll_leg = createBox(START_X-2,START_Y-144,10,40,-Math.PI/6,false,10,collisionType);
+    l_foot = createBox(START_X-2,START_Y-144,25,10,0,false,10,collisionType);
     ur_leg = createBox(START_X-2,START_Y-116,15,40,Math.PI/6,false,10,collisionType);
     lr_leg = createBox(START_X-2,START_Y-144,10,40,-Math.PI/6,false,10,collisionType);
     ul_arm = createBox(START_X-10, START_Y-48, 10, 20, 0, false, 0.1,collisionType);
     ll_arm = createBox(START_X-10, START_Y-85, 10, 40, 0, false, 0.1,collisionType);
-    l_foot = createBox(START_X-2,START_Y-144,25,10,0,false,10,collisionType);
     r_foot = createBox(START_X-2,START_Y-144,25,10,0,false,10,collisionType);
    
     curVelX = 0.0;
@@ -447,7 +477,7 @@ function resetJack() {
     r_shoulder_anchor.y = r_shoulder_anchor.y + 14.3;
        r_shoulder_jointDef.Initialize(ur_arm, torso, r_shoulder_anchor);
     var r_shoulder_joint = world.CreateJoint(r_shoulder_jointDef);
-
+    
     // Connect Right elbow
     var r_elbow_jointDef = new b2RevoluteJointDef();
     var r_elbow_anchor = lr_arm.GetWorldCenter();
@@ -573,7 +603,7 @@ function resetJack() {
     l_ankle_joint.SetLimits(ankleLimits[0],ankleLimits[1]);
     curX = getHipBaseX();
 
-  
+    body.ur_arm.rotation = 70;
 }
 
 

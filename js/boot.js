@@ -31,7 +31,7 @@ var debugDraw = true;
 
 var timestep = 60;
 var freq = 1/timestep;
-var gravity = new b2Vec2(0, -300);
+var gravity = new b2Vec2(0, -400);
 var world = new b2World(gravity, true);
 
 var worldWidth = 500;
@@ -149,4 +149,7 @@ var OKey;
 var PKey;
 var SpaceKey;
 
-
+var Qtext;
+var Wtext;
+var Otext;
+var Ptext;
