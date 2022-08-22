@@ -50,14 +50,18 @@ function create(){
   RFoot.body.setRectangle(100,40);
   RAnkle = game.physics.box2d.revoluteJoint(RCalf, RFoot, 0, 80, -25,20);
   RAnkle.m_enableLimit = true;
-  // RUpperArm = game.add.sprite(startX, startY, 'upperArm');
-  // RUpperArm.mass = 1;
-  // game.physics.box2d.enable(RUpperArm);
-  // RFoot.scale.setTo(.65,.65);
-  // RFoot.body.setRectangle(100,100);
-  // RShoulder = game.physics.box2d.revoluteJoint(RCalf, RFoot, 0, 100, 0,-50);
-
-//   console.log(game);
+  RUpperArm = game.add.sprite(startX, startY, 'upperArm');
+   RUpperArm.mass = .1;
+   game.physics.box2d.enable(RUpperArm);
+   RUpperArm.scale.setTo(.65,.65);
+   RUpperArm.body.setRectangle(50,100);
+   RShoulder = game.physics.box2d.revoluteJoint(RUpperArm, Body, 0, 0, 0,-50);
+  //  RLowerArm = game.add.sprite(startX, startY, 'lowerArm');
+  //  RLowerArm.mass = .1;
+  //  game.physics.box2d.enable(RLowerArm);
+  //  RLowerArm.scale.setTo(.65,.65);
+  //  RLowerArm.body.setRectangle(50,100);
+  //  RElbow = game.physics.box2d.revoluteJoint(RLowerArm, RUpperArm, 0, 20, 0,0);
 }
 
 function update(){
