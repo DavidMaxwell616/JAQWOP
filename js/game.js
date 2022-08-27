@@ -9,6 +9,10 @@ var game = new Phaser.Game(800, 500, Phaser.BOX2D, 'phaser-example',
 function create() {
  
   game.stage.backgroundColor = '#124184';
+  background = game.add.image(0, 0, 'background');
+  background.anchor.setTo(0, 0);
+  background.width = CANVAS_WIDTH*1.25;
+  background.height = CANVAS_HEIGHT*1.25;
 
     // Enable Box2D physics
     game.physics.startSystem(Phaser.Physics.BOX2D);
@@ -35,7 +39,9 @@ function create() {
   velocityText = drawText('Velocity: ' + Math.round(10*curVelX)/10 + ' m/s',300,60,font, color);
   KeyStateText = drawText('Keystate: ' + keyState,50,90,font,color);
   
-   
+  farthestDistTraveled = localStorage.getItem(localStorageName) == null ? 0 :
+  localStorage.getItem(localStorageName);
+
   QKey = game.input.keyboard.addKey(Phaser.Keyboard.Q);
   QKey.onDown.add(function(event) {
     handleQPressed(); }, this);  
@@ -80,14 +86,16 @@ function drawText(text, x, y, font, color) {
 function handleQPressed(){
   rightHip.SetMotorSpeed(walkSpeed);
   leftHip.SetMotorSpeed(-walkSpeed);
-  leftElbow.SetMotorSpeed(walkSpeed);
-  rightElbow.SetMotorSpeed(-walkSpeed);
+  leftShoulder.SetMotorSpeed(walkSpeed);
+  rightShoulder.SetMotorSpeed(-walkSpeed);
   keyState = 'Q';
 }
 
 function handleQReleased(){
   rightHip.SetMotorSpeed(0);
   leftHip.SetMotorSpeed(0);
+  leftShoulder.SetMotorSpeed(0);
+  rightShoulder.SetMotorSpeed(-0);
   keyState = '';
 }  
 
@@ -102,21 +110,25 @@ function handleOPressed(){
 function handleOReleased(){
   leftKnee.SetMotorSpeed(0);
   rightKnee.SetMotorSpeed(0);
+  rightElbow.SetMotorSpeed(0);
+  leftElbow.SetMotorSpeed(0);
   keyState = '';
 }  
 
 function handleWPressed(){
   leftHip.SetMotorSpeed(walkSpeed);
   rightHip.SetMotorSpeed(-walkSpeed);
-  rightElbow.SetMotorSpeed(walkSpeed);
-  leftElbow.SetMotorSpeed(-walkSpeed);
+  rightShoulder.SetMotorSpeed(walkSpeed);
+  leftShoulder.SetMotorSpeed(-walkSpeed);
   keyState = 'W';
 }
 
 function handleWReleased(){
   leftHip.SetMotorSpeed(0);
   rightHip.SetMotorSpeed(0);
-  keyState = '';
+  rightShoulder.SetMotorSpeed(0);
+  leftShoulder.SetMotorSpeed(0);
+ keyState = '';
 }  
 
 function handlePPressed(){
@@ -130,6 +142,8 @@ function handlePPressed(){
 function handlePReleased(){
   rightKnee.SetMotorSpeed(0);
   leftKnee.SetMotorSpeed(0);
+  leftElbow.SetMotorSpeed(0);
+  rightElbow.SetMotorSpeed(0);
   keyState = '';
 }  
 
@@ -138,7 +152,80 @@ function handleSpacePressed(){
 }
 
 function createBodiesAndJoints(){
-  //Revolute Joint Parameters:
+
+  upperLeftArm = game.add.sprite(originX, originY, 'upperArm');
+  game.physics.box2d.enable(upperLeftArm);
+  upperLeftArm.body.setRectangle(25, 80, 0, 0, 0);
+  upperLeftArm.scale.x=.45;
+  upperLeftArm.scale.y=.45;
+ 
+  lowerLeftArm = game.add.sprite(originX, originY, 'lowerArm');
+  game.physics.box2d.enable(lowerLeftArm);
+  lowerLeftArm.body.setRectangle(25, 80, 0, 0, 0);
+  lowerLeftArm.scale.x=.45;
+  lowerLeftArm.scale.y=.45;
+
+  leftFoot = game.add.sprite(originX, originY+200, 'foot');
+  game.physics.box2d.enable(leftFoot);
+  leftFoot.body.setRectangle(50, 15, 0, 0, 0);
+  leftFoot.scale.x=.45;
+  leftFoot.scale.y=.45;
+
+  leftLeg = game.add.sprite(originX, originY+160, 'leg');
+  game.physics.box2d.enable(leftLeg);
+  leftLeg.body.setRectangle(25, 80, 0, 0, 0);
+  leftLeg.scale.x=.45;
+  leftLeg.scale.y=.45;
+    
+ leftThigh = game.add.sprite(originX, originY, 'thigh');
+ game.physics.box2d.enable(leftThigh);
+ leftThigh.body.setRectangle(25, 80, 0, 0, 0);
+ leftThigh.scale.x=.45;
+ leftThigh.scale.y=.45;
+
+ head = game.add.sprite(originX+20, originY-50, 'head');
+    game.physics.box2d.enable(head);
+    head.body.setCircle(35);
+    head.scale.x=.35;
+    head.scale.y=.35;
+
+    rightFoot = game.add.sprite(originX, originY+200, 'foot');
+    game.physics.box2d.enable(rightFoot);
+    rightFoot.body.setRectangle(50, 15, 0, 0, 0);
+    rightFoot.scale.x=.45;
+    rightFoot.scale.y=.45;
+
+    rightLeg = game.add.sprite(originX, originY+160, 'leg');
+    game.physics.box2d.enable(rightLeg);
+    rightLeg.body.setRectangle(25, 80, 0, 0, 0);
+    rightLeg.scale.x=.45;
+    rightLeg.scale.y=.45;
+   
+    rightThigh = game.add.sprite(originX, originY, 'thigh');
+    game.physics.box2d.enable(rightThigh);
+    rightThigh.body.setRectangle(25, 80, 0, 0, 0);
+    rightThigh.scale.x=.45;
+    rightThigh.scale.y=.45;
+    
+    body = game.add.sprite(originX, originY, 'body');
+    game.physics.box2d.enable(body);
+    body.body.setRectangle(50, 140, 0, 0, 0);
+    body.scale.x=.35;
+    body.scale.y=.35;
+
+ lowerRightArm = game.add.sprite(originX, originY, 'lowerArm');
+ game.physics.box2d.enable(lowerRightArm);
+ lowerRightArm.body.setRectangle(25, 80, 0, 0, 0);
+ lowerRightArm.scale.x=.45;
+ lowerRightArm.scale.y=.45;
+
+ upperRightArm = game.add.sprite(originX, originY, 'upperArm');
+ game.physics.box2d.enable(upperRightArm);
+ upperRightArm.body.setRectangle(25, 80, 0, 0, 0);
+ upperRightArm.scale.x=.45;
+ upperRightArm.scale.y=.45;
+
+ //Revolute Joint Parameters:
  //bodyA, 
  //bodyB, 
  //ax, 
@@ -152,105 +239,19 @@ function createBodiesAndJoints(){
  //upperLimit, 
  //limitEnabled
 
- rightThigh = game.add.sprite(originX, originY, 'thigh');
- game.physics.box2d.enable(rightThigh);
- rightThigh.body.setRectangle(15, 80, 0, 0, 0);
- rightThigh.scale.x=.35;
- rightThigh.scale.y=.35;
-
-
- rightLeg = game.add.sprite(originX, originY+160, 'leg');
- game.physics.box2d.enable(rightLeg);
- rightLeg.body.setRectangle(15, 80, 0, 0, 0);
- rightLeg.scale.x=.35;
- rightLeg.scale.y=.35;
-
-  rightKnee = game.physics.box2d.revoluteJoint(rightThigh, rightLeg, 0, 30, 0, -40,0,motorTorque,true,kneeLimits[0],kneeLimits[1],true);
-
-  rightFoot = game.add.sprite(originX, originY+200, 'foot');
- game.physics.box2d.enable(rightFoot);
- rightFoot.body.setRectangle(50, 15, 0, 0, 0);
- rightFoot.scale.x=.35;
- rightFoot.scale.y=.35;
- 
- rightAnkle = game.physics.box2d.revoluteJoint(rightLeg, rightFoot, 0, 40, -10, 0,0,motorTorque,true,ankleLimits[0], ankleLimits[1], true);
-
- upperRightArm = game.add.sprite(originX, originY, 'upperArm');
- game.physics.box2d.enable(upperRightArm);
- upperRightArm.body.setRectangle(15, 80, 0, 0, 0);
- upperRightArm.scale.x=.35;
- upperRightArm.scale.y=.35;
-
-
-
- lowerRightArm = game.add.sprite(originX, originY, 'lowerArm');
- game.physics.box2d.enable(lowerRightArm);
- lowerRightArm.body.setRectangle(15, 80, 0, 0, 0);
- lowerRightArm.scale.x=.35;
- lowerRightArm.scale.y=.35;
-
-
- rightElbow = game.physics.box2d.revoluteJoint(upperRightArm,lowerRightArm,  0, 40, 0, -30,0,motorTorque,false,elbowLimits[0],elbowLimits[1],true);
-
- body = game.add.sprite(originX, originY, 'body');
-    game.physics.box2d.enable(body);
-    body.body.setRectangle(40, 120, 0, 0, 0);
-    body.scale.x=.35;
-    body.scale.y=.35;
-
- head = game.add.sprite(originX, originY-50, 'head');
-    game.physics.box2d.enable(head);
-    head.body.setCircle(25);
-    head.scale.x=.35;
-    head.scale.y=.35;
-
- var neck = game.physics.box2d.weldJoint(head, body, 20,50,0,-45);
- //body.static = true;
-
+ //JOINTS
+ var neck = game.physics.box2d.weldJoint(head, body, 10,60,10,-50);
+ rightElbow = game.physics.box2d.revoluteJoint(upperRightArm,lowerRightArm, 10, 50, -10, -30,0,motorTorque,false,elbowLimits[0],elbowLimits[1],true);
  rightHip = game.physics.box2d.revoluteJoint(body, rightThigh, 0, 40, 0, -50,0,motorTorque,true,hipLimits[0], hipLimits[1], true);
- rightShoulder = game.physics.box2d.revoluteJoint(upperRightArm, body, 0, -50, 0, -60,0,motorTorque,true,shoulderLimits[0],shoulderLimits[1],true);
- //prismatic joint between the piston and the ground, this joints purpose is just to restrict the piston from moving on the x axis
- //game.physics.box2d.prismaticJoint(ground, body, 0, 1, 0, 0, 0, 0);
-
- leftThigh = game.add.sprite(originX, originY, 'thigh');
- game.physics.box2d.enable(leftThigh);
- leftThigh.body.setRectangle(15, 80, 0, 0, 0);
- leftThigh.scale.x=.35;
- leftThigh.scale.y=.35;
-
-
- leftLeg = game.add.sprite(originX, originY+160, 'leg');
- game.physics.box2d.enable(leftLeg);
- leftLeg.body.setRectangle(15, 80, 0, 0, 0);
- leftLeg.scale.x=.35;
- leftLeg.scale.y=.35;
-
+ rightShoulder = game.physics.box2d.revoluteJoint(upperRightArm, body, 10, -30, 10, -50,0,motorTorque,true,shoulderLimits[0],shoulderLimits[1],true);
+ rightAnkle = game.physics.box2d.revoluteJoint(rightLeg, rightFoot, 0, 40, -20, 0,0,motorTorque,true,ankleLimits[0], ankleLimits[1], true);
+ rightKnee = game.physics.box2d.revoluteJoint(rightThigh, rightLeg, 0, 30, 0, -40,0,motorTorque,true,kneeLimits[0],kneeLimits[1],true);
  leftKnee = game.physics.box2d.revoluteJoint(leftThigh, leftLeg, 0, 30, 0, -40,0,motorTorque,true,kneeLimits[0],kneeLimits[1],true);
  leftHip = game.physics.box2d.revoluteJoint(body, leftThigh, 0, 40, 0, -50,0,motorTorque,true,hipLimits[0], hipLimits[1], true);
+ leftShoulder = game.physics.box2d.revoluteJoint(upperLeftArm, body, 10, -30, 10, -50,0,motorTorque,true,shoulderLimits[0],shoulderLimits[1],true);
+ leftAnkle = game.physics.box2d.revoluteJoint(leftLeg, leftFoot, 0, 40, -20, 0,0,motorTorque,true,ankleLimits[0], ankleLimits[1], true);
+ leftElbow = game.physics.box2d.revoluteJoint(upperLeftArm,lowerLeftArm,  10, 50, -10, -30,0,motorTorque,false,elbowLimits[0],elbowLimits[1],true);
 
- leftFoot = game.add.sprite(originX, originY+200, 'foot');
- game.physics.box2d.enable(leftFoot);
- leftFoot.body.setRectangle(50, 15, 0, 0, 0);
- leftFoot.scale.x=.35;
- leftFoot.scale.y=.35;
-
- leftAnkle = game.physics.box2d.revoluteJoint(leftLeg, leftFoot, 0, 40, -10, 0,0,motorTorque,true,ankleLimits[0], ankleLimits[1], true);
-
-
- upperLeftArm = game.add.sprite(originX, originY, 'upperArm');
- game.physics.box2d.enable(upperLeftArm);
- upperLeftArm.body.setRectangle(15, 80, 0, 0, 0);
- upperLeftArm.scale.x=.35;
- upperLeftArm.scale.y=.35;
- leftShoulder = game.physics.box2d.revoluteJoint(upperLeftArm, body, 0, -50, 0, -60,0,motorTorque,true,shoulderLimits[0],shoulderLimits[1],true);
-
- lowerLeftArm = game.add.sprite(originX, originY, 'lowerArm');
- game.physics.box2d.enable(lowerLeftArm);
- lowerLeftArm.body.setRectangle(15, 80, 0, 0, 0);
- lowerLeftArm.scale.x=.35;
- lowerLeftArm.scale.y=.35;
- 
- leftElbow = game.physics.box2d.revoluteJoint(upperLeftArm,lowerLeftArm,  0, 40, 0, -30,0,motorTorque,false,elbowLimits[0],elbowLimits[1],true);
 
  //setup collision categories
  leftFoot.body.setCollisionCategory(CATEGORY_BODYPARTS);
@@ -324,17 +325,21 @@ function ResetBody(){
  rightShoulder.SetMotorSpeed(0);
  leftElbow.SetMotorSpeed(0);
  rightElbow.SetMotorSpeed(0);
+ rightHip.m_lowerAngle=0;//.6981317007977318;
+ rightHip.m_upperAngle=0;//.6981317007977318;
  now = new Date().getTime();
-  
+ if(farthestDistTraveled<totalDistTraveled)
+   localStorage.setItem(localStorageName, farthestDistTraveled);
+   
  }
 
 function SetPosition(object,x,y){
-  object.x = x;
-  object.y = y;
-  object.angle =0;
-  if(typeof object=="object"){
-    object.velocity.x=0;
-    object.velocity.y=0;
+   if(typeof object=="object"){
+    object.body.x = x;
+    object.body.y = y;
+    object.body.angle =0;
+    object.body.velocity.x=0;
+    object.body.velocity.y=0;
   }
 }
 
@@ -347,5 +352,5 @@ function updateText(){
 }
 
 function render() {
-  game.debug.box2dWorld();
+ // game.debug.box2dWorld();
 }

@@ -1,3 +1,5 @@
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 500;
 var takingRightStep = true;
 var takingLeftStep =  false;
 var ground;
@@ -21,7 +23,7 @@ var hipLimits = [-40,40];
 var kneeLimits = [0,40];
 var ankleLimits = [-5,20];
 var elbowLimits = [-40,0];
-var shoulderLimits = [-50,50];
+var shoulderLimits = [-20,20];
 var CATEGORY_BODYPARTS = 0x0001;  // 0000000000000001 in binary
 var CATEGORY_GROUND = 0x0002; // 0000000000000010 in binary
 var MASK_BODYPARTS = CATEGORY_GROUND;
@@ -49,3 +51,4 @@ var totalDistTraveled = 0;
 var curVelX =0;
 var keyState;
 var now;
+var localStorageName = "JAQWOP";
