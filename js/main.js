@@ -1,5 +1,6 @@
 import GameScene from "./GameScene.js";
-const W = 800, H = 500;
+const W = 800, H = 600;
+//background dimensions = 1920x1440
 
 new Phaser.Game({
     type: Phaser.AUTO,

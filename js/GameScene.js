@@ -1,12 +1,12 @@
 const W = 800;
-const H = 500;
+const H = 600;
 
 const PPM = 30;
 
 const m2px = (m) => m * PPM;
 const px2m = (px) => px / PPM;
-const originX = 400;
-const originY = 260;
+const originX = W / 2;
+const originY = 295;
 
 // --- Controls / tuning ---
 const walkSpeed = 2.5;
@@ -18,8 +18,9 @@ const motorTorque = 150;
 // const shoulderLimits = [-1.0, 1.0];
 // const elbowLimits = [-1.2, 0.2];
 
-const hipLimits = [-0.8, 0.8];
-const kneeLimits = [-1.2, 0.1];
+const hipLimits = [-0.2, 0.8];
+const pelvisLimits = [-0.8, 0];
+const kneeLimits = [0.1, 1.2];
 const ankleLimits = [-0.6, 0.6];
 const shoulderLimits = [-1.0, 1.0];
 const elbowLimits = [-1.2, 0.2];
@@ -35,45 +36,51 @@ const pl = planck;
 const lowerLeftArmOffset = { x: 0, y: 40 };
 const upperLeftArmOffset = { x: - 10, y: - 20 };
 const leftThighOffset = { x: 0, y: 70 };
-const leftFootOffset = { x: - 25, y: 180 };
-const leftLegOffset = { x: - 15, y: 140 };
-const rightFootOffset = { x: 25, y: 180 };
+const leftFootOffset = { x: -10, y: 180 };
+const leftLegOffset = { x: 0, y: 140 };
+const rightFootOffset = { x: 10, y: 180 };
 const rightLegOffset = { x: 0, y: 140 };
 const rightThighOffset = { x: 0, y: 70 };
 const headOffset = { x: 0, y: -95 };
-const torsoOffset = { x: 0, y: 0 };
+const backOffset = { x: 0, y: 0 };
+const pelvisOffset = { x: 0, y: 0 };
 const lowerRightArmOffset = { x: 0, y: 40 };
 const upperRightArmOffset = { x: - 10, y: - 20 };
-
 
 export default class MainScene extends Phaser.Scene {
     constructor() { super("main"); }
 
     preload() {
-        // External sprites (add these files to assets/images/)
-        this.load.image("body", "assets/images/body.png");
-        this.load.image("thigh", "assets/images/thigh.png");
-        this.load.image("leg", "assets/images/leg.png");
-        this.load.image("foot", "assets/images/foot.png");
-        this.load.image("upperArm", "assets/images/upperArm.png");
-        this.load.image("lowerArm", "assets/images/lowerArm.png");
-        this.load.image("head", "assets/images/head.png");
-        this.load.image("background", "assets/images/background.JPG");
+        this.load.path = "assets/images/";
+        this.load.image("body", "body.png");
+        this.load.image("thigh", "thigh.png");
+        this.load.image("leg", "leg.png");
+        this.load.image("foot", "foot.png");
+        this.load.image("upperArm", "upperArm.png");
+        this.load.image("lowerArm", "lowerArm.png");
+        this.load.image("head", "head.png");
+        this.load.path = "assets/images/background/";
+        for (let index = 0; index < 21; index++) {
+            const paddedFrame = index.toString().padStart(4, '0');
+            const fileName = "20210211_163837-" + paddedFrame + ".jpg";
+            this.load.image("background-" + index, fileName);
+
+        }
     }
 
     create() {
+        this.currentBackground = 0;
         this.cameras.main.setBackgroundColor(0x124184);
-        const bg = this.add.image(0, 0, "background").setOrigin(0, 0);
-        bg.setDisplaySize(W * 1.25, H * 1.25);
+        const bg = this.add.image(0, 0, "background-" + this.currentBackground).setOrigin(0, 0);
+        bg.setDisplaySize(W, H);
 
         // --- Planck world ---
-        this.world = new pl.World(pl.Vec2(0, 500 / PPM)); // ~500 px/s^2
+        this.world = new pl.World(pl.Vec2(0, H / PPM)); // ~500 px/s^2
         this._accum = 0;
 
         // --- Ground ---
-        this.groundYpx = 490;
-
-        const groundW = 800;
+        this.groundYpx = H - 80;
+        const groundW = W;
         const groundH = 60; // thicker = less tunneling
 
         this.ground = this.world.createBody({
@@ -99,8 +106,8 @@ export default class MainScene extends Phaser.Scene {
         this.createBodiesAndJoints();
 
         // --- UI ---
-        const font = { fontFamily: "Calibri, Arial", fontSize: "20px", color: "#ffffff" };
-        const shX = -5, shY = 5, shCol = "rgba(0,0,0,0.5)", shBlur = 1;
+        const font = { fontFamily: "Calibri, Arial", fontSize: "30px", color: "#faa662", fontWeight: 'bold' };
+        const shX = -1, shY = 1, shCol = "rgb(0, 0, 0)", shBlur = 0, shStroke = true, shFill = true;
 
         this.keyState = "";
         this.bestDist = 0;
@@ -108,11 +115,11 @@ export default class MainScene extends Phaser.Scene {
         this.velX = 0;
         this.nowMs = Date.now();
 
-        this.bestDistText = this.add.text(50, 30, "", font).setShadow(shX, shY, shCol, shBlur);
-        this.timeText = this.add.text(300, 30, "", font).setShadow(shX, shY, shCol, shBlur);
-        this.totalDistText = this.add.text(50, 60, "", font).setShadow(shX, shY, shCol, shBlur);
-        this.velocityText = this.add.text(300, 60, "", font).setShadow(shX, shY, shCol, shBlur);
-        this.keyStateText = this.add.text(50, 90, "", font).setShadow(shX, shY, shCol, shBlur);
+        this.bestDistText = this.add.text(50, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.timeText = this.add.text(350, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.totalDistText = this.add.text(50, 60, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.velocityText = this.add.text(350, 60, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.keyStateText = this.add.text(50, 90, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
 
         // --- input ---
         this.keys = this.input.keyboard.addKeys({
@@ -219,17 +226,19 @@ head: 180 x 237 1.316
         this.upperLeftArm = this.makePartRect("upperArm", originX + upperLeftArmOffset.x, originY + upperLeftArmOffset.y, S.upperArm.w, S.upperArm.h);
 
         // Legs
-        this.leftThigh = this.makePartRect("thigh", originX + leftThighOffset.x, originY + leftThighOffset.y, S.thigh.w, S.thigh.h);
         this.leftFoot = this.makePartRect("foot", originX + leftFootOffset.x, originY + leftFootOffset.y, S.foot.w, S.foot.h);
         this.leftLeg = this.makePartRect("leg", originX + leftLegOffset.x, originY + leftLegOffset.y, S.leg.w, S.leg.h);
+        this.leftThigh = this.makePartRect("thigh", originX + leftThighOffset.x, originY + leftThighOffset.y, S.thigh.w, S.thigh.h);
 
         this.rightFoot = this.makePartRect("foot", originX + rightFootOffset.x, originY + rightFootOffset.y, S.foot.w, S.foot.h);
         this.rightLeg = this.makePartRect("leg", originX + rightLegOffset.x, originY + rightLegOffset.y, S.leg.w, S.leg.h);
         this.rightThigh = this.makePartRect("thigh", originX + rightThighOffset.x, originY + rightThighOffset.y, S.thigh.w, S.thigh.h);
 
-        // Torso + head
+        // body + head
         this.head = this.makePartCircle("head", originX + headOffset.x, originY + headOffset.y, S.head.r, 0.8);
-        this.torso = this.makePartRect("body", originX + torsoOffset.x, originY + torsoOffset.y, S.body.w, S.body.h, 1.2);
+
+        this.back = this.makePartRect("body", originX + backOffset.x, originY + backOffset.y, 50, 90, 1.2);
+        this.pelvis = this.makePartRect("body", originX + pelvisOffset.x, originY + pelvisOffset.y, 55, 55, 1.2);
 
         this.lowerRightArm = this.makePartRect("lowerArm", originX + lowerRightArmOffset.x, originY + lowerRightArmOffset.y, S.lowerArm.w, S.lowerArm.h);
         this.upperRightArm = this.makePartRect("upperArm", originX + upperRightArmOffset.x, originY + upperRightArmOffset.y, S.upperArm.w, S.upperArm.h);
@@ -237,18 +246,17 @@ head: 180 x 237 1.316
         const v = (xPx, yPx) => pl.Vec2(px2m(xPx), px2m(yPx));
 
         // Neck weld
-        this.neck = this.world.createJoint(pl.WeldJoint({}, this.head.body, this.torso.body, v(originX, originY - 35)));
-
+        this.neck = this.world.createJoint(pl.WeldJoint({}, this.head.body, this.back.body, v(originX, originY - 35)));
         // Shoulders
         this.rightShoulder = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: shoulderLimits[0], upperAngle: shoulderLimits[1]
-        }, this.upperRightArm.body, this.torso.body, v(originX - 10, originY - 40)));
+        }, this.upperRightArm.body, this.back.body, v(originX, originY - 40)));
 
         this.leftShoulder = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: shoulderLimits[0], upperAngle: shoulderLimits[1]
-        }, this.upperLeftArm.body, this.torso.body, v(originX - 10, originY - 40)));
+        }, this.upperLeftArm.body, this.back.body, v(originX, originY - 40)));
 
         // Elbows (disabled by default)
         this.rightElbow = this.world.createJoint(pl.RevoluteJoint({
@@ -259,35 +267,53 @@ head: 180 x 237 1.316
         this.leftElbow = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: false, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: elbowLimits[0], upperAngle: elbowLimits[1]
-        }, this.upperLeftArm.body, this.lowerLeftArm.body, v(originX - 45, originY + 10)));
+        }, this.upperLeftArm.body, this.lowerLeftArm.body, v(originX, originY + 10)));
 
-        // Hips
-        this.rightHip = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: hipLimits[0], upperAngle: hipLimits[1]
-        }, this.torso.body, this.rightThigh.body, v(originX + 10, originY + 40)));
+        // hipBack (Back <-> Pelvis)
+        this.hipBack = this.world.createJoint(pl.RevoluteJoint({
+            enableMotor: true,
+            motorSpeed: 0,
+            maxMotorTorque: motorTorque,
+            enableLimit: true,
+            lowerAngle: hipLimits[0],
+            upperAngle: hipLimits[1]
+        }, this.back.body, this.pelvis.body, v(originX, originY + 10)));
 
-        this.leftHip = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: hipLimits[0], upperAngle: hipLimits[1]
-        }, this.torso.body, this.leftThigh.body, v(originX + 10, originY + 40)));
+        // hipLeg joints (Pelvis <-> Thigh)
+        this.leftHipLeg = this.world.createJoint(pl.RevoluteJoint({
+            enableMotor: true,
+            motorSpeed: 0,
+            maxMotorTorque: motorTorque,
+            enableLimit: true,
+            lowerAngle: pelvisLimits[0],
+            upperAngle: pelvisLimits[1]
+        }, this.pelvis.body, this.leftThigh.body, v(originX - 10, originY + 60)));
+
+        this.rightHipLeg = this.world.createJoint(pl.RevoluteJoint({
+            enableMotor: true,
+            motorSpeed: 0,
+            maxMotorTorque: motorTorque,
+            enableLimit: true,
+            lowerAngle: pelvisLimits[0],
+            upperAngle: pelvisLimits[1]
+        }, this.pelvis.body, this.rightThigh.body, v(originX + 10, originY + 60)));
 
         // Knees
         this.rightKnee = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: kneeLimits[0], upperAngle: kneeLimits[1]
-        }, this.rightThigh.body, this.rightLeg.body, v(originX + 15, originY + 110)));
+        }, this.rightThigh.body, this.rightLeg.body, v(originX - 10, originY + 110)));
 
         this.leftKnee = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: kneeLimits[0], upperAngle: kneeLimits[1]
-        }, this.leftThigh.body, this.leftLeg.body, v(originX - 15, originY + 110)));
+        }, this.leftThigh.body, this.leftLeg.body, v(originX + 10, originY + 110)));
 
         // Ankles
         this.rightAnkle = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
             enableLimit: true, lowerAngle: ankleLimits[0], upperAngle: ankleLimits[1]
-        }, this.rightLeg.body, this.rightFoot.body, v(originX + 20, originY + 185)));
+        }, this.rightLeg.body, this.rightFoot.body, v(originX + 10, originY + 190)));
 
         this.leftAnkle = this.world.createJoint(pl.RevoluteJoint({
             enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
@@ -320,24 +346,33 @@ head: 180 x 237 1.316
         };
 
         sync(this.head);
-        sync(this.torso);
-        sync(this.upperLeftArm); sync(this.lowerLeftArm);
-        sync(this.upperRightArm); sync(this.lowerRightArm);
-        sync(this.leftThigh); sync(this.leftLeg); sync(this.leftFoot);
-        sync(this.rightThigh); sync(this.rightLeg); sync(this.rightFoot);
+        sync(this.back);
+        sync(this.pelvis);
+        sync(this.upperLeftArm);
+        sync(this.lowerLeftArm);
+        sync(this.upperRightArm);
+        sync(this.lowerRightArm);
+        sync(this.leftThigh);
+        sync(this.leftLeg);
+        sync(this.leftFoot);
+        sync(this.rightThigh);
+        sync(this.rightLeg);
+        sync(this.rightFoot);
     }
 
     // --- controls ---
     handleQPressed() {
-        this.rightHip.setMotorSpeed(+walkSpeed);
-        this.leftHip.setMotorSpeed(-walkSpeed);
+        this.rightHipLeg.setMotorSpeed(+walkSpeed);
+        this.leftHipLeg.setMotorSpeed(-walkSpeed);
+        this.hipBack.setMotorSpeed(-walkSpeed * 0.6); // counter lean
         this.leftShoulder.setMotorSpeed(+walkSpeed);
         this.rightShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "Q";
     }
     handleQReleased() {
-        this.rightHip.setMotorSpeed(0);
-        this.leftHip.setMotorSpeed(0);
+        this.rightHipLeg.setMotorSpeed(0);
+        this.leftHipLeg.setMotorSpeed(0);
+        this.hipBack.setMotorSpeed(0);
         this.leftShoulder.setMotorSpeed(0);
         this.rightShoulder.setMotorSpeed(0);
         this.keyState = "";
@@ -363,15 +398,17 @@ head: 180 x 237 1.316
     }
 
     handleWPressed() {
-        this.leftHip.setMotorSpeed(+walkSpeed);
-        this.rightHip.setMotorSpeed(-walkSpeed);
+        this.rightHipLeg.setMotorSpeed(-walkSpeed);
+        this.leftHipLeg.setMotorSpeed(+walkSpeed);
+        this.hipBack.setMotorSpeed(+walkSpeed * 0.6);
         this.rightShoulder.setMotorSpeed(+walkSpeed);
         this.leftShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "W";
     }
     handleWReleased() {
-        this.leftHip.setMotorSpeed(0);
-        this.rightHip.setMotorSpeed(0);
+        this.rightHipLeg.setMotorSpeed(0);
+        this.leftHipLeg.setMotorSpeed(0);
+        this.hipBack.setMotorSpeed(0);
         this.rightShoulder.setMotorSpeed(0);
         this.leftShoulder.setMotorSpeed(0);
         this.keyState = "";
@@ -404,7 +441,8 @@ head: 180 x 237 1.316
         };
 
         set(this.head, originX + headOffset.x, originY + headOffset.y);
-        set(this.torso, originX + torsoOffset.x, originY + torsoOffset.y);
+        set(this.back, originX + backOffset.x, originY + backOffset.y);
+        set(this.pelvis, originX + pelvisOffset.x, originY + pelvisOffset.y);
 
         set(this.rightThigh, originX + rightThighOffset.x, originY + rightThighOffset.y);
         set(this.rightLeg, originX + rightLegOffset.x, originY + rightThighOffset.y);
@@ -430,7 +468,7 @@ head: 180 x 237 1.316
     updateHud() {
         const t = (Date.now() - this.nowMs) / 1000;
         const vx = this.head.body.getLinearVelocity().x;
-        const dist = (this.torso.sprite.x - originX) / PPM;
+        const dist = (this.back.sprite.x - originX) / PPM;
 
         this.bestDist = Math.max(this.bestDist, dist);
         this.totalDist = dist;
