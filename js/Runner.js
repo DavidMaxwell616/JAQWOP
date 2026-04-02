@@ -194,7 +194,6 @@ export class Runner {
                     upperAngle: pelvisLimits[1]
                 }, this.pelvis.body, this.leftThigh.body, v(originX - 10, originY + 50))
             ),
-
             rightHipLeg: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,

@@ -65,25 +65,37 @@ export default class MainScene extends Phaser.Scene {
             SIDEWALK: 139,
             GRASS: 247
         }
+        this.BackgroundHeight = 1024;
+        const backgroundResizeY = this.BackgroundHeight / 600;
 
+        const houseHeight = this.LAYER_HEIGHT.HOUSES / this.BackgroundHeight * (backgroundResizeY);
         this.houses = this.add.image(0, 0, "houses_layer")
-            .setOrigin(0, 0);
+            .setOrigin(0, 0)
+            .setScale(1, houseHeight);
 
-        this.fence = this.add.image(0, 60, "fence_layer")
-            .setOrigin(0, 0);
+        const fenceHeight = this.LAYER_HEIGHT.FENCE / this.BackgroundHeight * (backgroundResizeY);
+        this.fence = this.add.image(0, 20, "fence_layer")
+            .setOrigin(0, 0)
+            .setScale(1, fenceHeight);
 
-        // this.foliage = this.add.image(0, 240, "foliage_layer")
-        //     .setOrigin(0, 0);
+        const foliageHeight = this.LAYER_HEIGHT.FOLIAGE / this.BackgroundHeight * (backgroundResizeY);
+        this.foliage = this.add.image(0, 400, "foliage_layer")
+            .setOrigin(0, 0)
+            .setScale(1, foliageHeight);
 
-        // this.sidewalk = this.add.image(0, 360, "sidewalk_layer")
-        //     .setOrigin(0, 0);
+        const sidewalkHeight = this.LAYER_HEIGHT.SIDEWALK / this.BackgroundHeight * (backgroundResizeY);
+        this.sidewalk = this.add.image(0, 460, "sidewalk_layer")
+            .setOrigin(0, 0)
+            .setScale(1, sidewalkHeight);
 
-        // this.grass = this.add.image(0, 480, "grass_layer")
-        //     .setOrigin(0, 0);
+        const grassHeight = this.LAYER_HEIGHT.GRASS / this.BackgroundHeight * (backgroundResizeY);
+        this.grass = this.add.image(0, 480, "grass_layer")
+            .setOrigin(0, 0)
+            .setScale(1, grassHeight);
 
         //        World width comes from the stitched strip
         this.worldWidth = this.sidewalk.width;
-        this.worldHeight = Math.max(H, this.sidewalk.height);
+        this.worldHeight = 600;
 
         this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
         // --- Planck world ---
@@ -220,7 +232,7 @@ export default class MainScene extends Phaser.Scene {
 
     // --- controls ---
     handleQPressed() {
-        this.rightHipLeg.setMotorSpeed(-walkSpeed);
+        this.joints.rightHipLeg.setMotorSpeed(-walkSpeed);
         this.leftHipLeg.setMotorSpeed(+walkSpeed);
         this.leftShoulder.setMotorSpeed(+walkSpeed);
         this.rightShoulder.setMotorSpeed(-walkSpeed);
