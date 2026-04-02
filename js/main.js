@@ -1,10 +1,9 @@
 import GameScene from "./GameScene.js";
 const W = 800, H = 600;
-//background dimensions = 1920x1440
 
 new Phaser.Game({
-    type: Phaser.AUTO,
-    backgroundColor: '#124184',
+    type: Phaser.WEBGL,
+    backgroundColor: '#679DDB',
     width: W,
     height: H,
     scene: [GameScene],

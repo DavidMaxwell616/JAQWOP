@@ -1,29 +1,18 @@
+import { Runner } from "./Runner.js";
 const W = 800;
 const H = 600;
 
 const PPM = 30;
 
-const m2px = (m) => m * PPM;
 const px2m = (px) => px / PPM;
-const originX = W / 2;
+const originX = W * .3;
 const originY = 295;
 
 // --- Controls / tuning ---
-const walkSpeed = 2.5;
-const motorTorque = 150;
+const walkSpeed = 4;
+const motorTorque = 420;
 
-// const hipLimits = [-0.8, 0.8];
-// const kneeLimits = [-1.2, 0.1];
-// const ankleLimits = [-0.6, 0.6];
-// const shoulderLimits = [-1.0, 1.0];
-// const elbowLimits = [-1.2, 0.2];
 
-const hipLimits = [-0.2, 0.8];
-const pelvisLimits = [-0.8, 0];
-const kneeLimits = [0.1, 1.2];
-const ankleLimits = [-0.6, 0.6];
-const shoulderLimits = [-1.0, 1.0];
-const elbowLimits = [-1.2, 0.2];
 // --- Categories / masks (FIXED) ---
 // Bodyparts collide ONLY with ground (no self-collision between limbs)
 const CATEGORY_BODYPARTS = 0x0002;
@@ -33,19 +22,7 @@ const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = CATEGORY_BODYPARTS;
 const pl = planck;
 
-const lowerLeftArmOffset = { x: 0, y: 40 };
-const upperLeftArmOffset = { x: - 10, y: - 20 };
-const leftThighOffset = { x: 0, y: 70 };
-const leftFootOffset = { x: -10, y: 180 };
-const leftLegOffset = { x: 0, y: 140 };
-const rightFootOffset = { x: 10, y: 180 };
-const rightLegOffset = { x: 0, y: 140 };
-const rightThighOffset = { x: 0, y: 70 };
-const headOffset = { x: 0, y: -95 };
-const backOffset = { x: 0, y: 0 };
-const pelvisOffset = { x: 0, y: 0 };
-const lowerRightArmOffset = { x: 0, y: 40 };
-const upperRightArmOffset = { x: - 10, y: - 20 };
+
 
 export default class MainScene extends Phaser.Scene {
     constructor() { super("main"); }
@@ -53,6 +30,7 @@ export default class MainScene extends Phaser.Scene {
     preload() {
         this.load.path = "assets/images/";
         this.load.image("body", "body.png");
+        this.load.image("pelvis", "pelvis.png");
         this.load.image("thigh", "thigh.png");
         this.load.image("leg", "leg.png");
         this.load.image("foot", "foot.png");
@@ -60,22 +38,56 @@ export default class MainScene extends Phaser.Scene {
         this.load.image("lowerArm", "lowerArm.png");
         this.load.image("head", "head.png");
         this.load.path = "assets/images/background/";
-        for (let index = 0; index < 21; index++) {
-            const paddedFrame = index.toString().padStart(4, '0');
-            const fileName = "20210211_163837-" + paddedFrame + ".jpg";
-            this.load.image("background-" + index, fileName);
-
-        }
+        this.load.image("houses_layer", "houses_layer.png");
+        this.load.image("fence_layer", "fence_layer.png");
+        this.load.image("foliage_layer", "foliage_layer.png");
+        this.load.image("sidewalk_layer", "sidewalk_layer.png");
+        this.load.image("grass_layer", "grass_layer.png");
     }
 
     create() {
-        this.currentBackground = 0;
-        this.cameras.main.setBackgroundColor(0x124184);
-        const bg = this.add.image(0, 0, "background-" + this.currentBackground).setOrigin(0, 0);
-        bg.setDisplaySize(W, H);
+        const W = this.scale.width;
+        const H = this.scale.height;
+        this.cameraScrollX = 0;
 
+        this.SCROLL_FACTOR = {
+            HOUSES: 0.05,
+            FENCE: 0.25,
+            FOLIAGE: 0.55,
+            SIDEWALK: 1,
+            GRASS: 1.2
+        };
+
+        this.LAYER_HEIGHT = {
+            HOUSES: 471,
+            FENCE: 493,
+            FOLIAGE: 192,
+            SIDEWALK: 139,
+            GRASS: 247
+        }
+
+        this.houses = this.add.image(0, 0, "houses_layer")
+            .setOrigin(0, 0);
+
+        this.fence = this.add.image(0, 60, "fence_layer")
+            .setOrigin(0, 0);
+
+        // this.foliage = this.add.image(0, 240, "foliage_layer")
+        //     .setOrigin(0, 0);
+
+        // this.sidewalk = this.add.image(0, 360, "sidewalk_layer")
+        //     .setOrigin(0, 0);
+
+        // this.grass = this.add.image(0, 480, "grass_layer")
+        //     .setOrigin(0, 0);
+
+        //        World width comes from the stitched strip
+        this.worldWidth = this.sidewalk.width;
+        this.worldHeight = Math.max(H, this.sidewalk.height);
+
+        this.cameras.main.setBounds(0, 0, this.worldWidth, this.worldHeight);
         // --- Planck world ---
-        this.world = new pl.World(pl.Vec2(0, H / PPM)); // ~500 px/s^2
+        this.world = new pl.World(pl.Vec2(0, H / PPM));
         this._accum = 0;
 
         // --- Ground ---
@@ -103,18 +115,16 @@ export default class MainScene extends Phaser.Scene {
 
 
         // --- Build ragdoll ---
-        this.createBodiesAndJoints();
-
+        this.runner = new Runner(this, this.world, originX, originY);
+        this.runner.applyPoseHold();
         // --- UI ---
-        const font = { fontFamily: "Calibri, Arial", fontSize: "30px", color: "#faa662", fontWeight: 'bold' };
+        const font = { fontFamily: "Impact", fontSize: "30px", color: "#faa662", fontWeight: 'bold' };
         const shX = -1, shY = 1, shCol = "rgb(0, 0, 0)", shBlur = 0, shStroke = true, shFill = true;
 
         this.keyState = "";
         this.bestDist = 0;
         this.totalDist = 0;
         this.velX = 0;
-        this.nowMs = Date.now();
-
         this.bestDistText = this.add.text(50, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
         this.timeText = this.add.text(350, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
         this.totalDistText = this.add.text(50, 60, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
@@ -127,7 +137,9 @@ export default class MainScene extends Phaser.Scene {
             W: Phaser.Input.Keyboard.KeyCodes.W,
             O: Phaser.Input.Keyboard.KeyCodes.O,
             P: Phaser.Input.Keyboard.KeyCodes.P,
-            SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE
+            RIGHT: Phaser.Input.Keyboard.KeyCodes.RIGHT,
+            LEFT: Phaser.Input.Keyboard.KeyCodes.LEFT,
+            SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
         });
 
         this.keys.Q.on("down", () => this.handleQPressed());
@@ -142,9 +154,13 @@ export default class MainScene extends Phaser.Scene {
         this.keys.P.on("down", () => this.handlePPressed());
         this.keys.P.on("up", () => this.handlePReleased());
 
+        this.keys.LEFT.on("down", () => this.handleLeftPressed());
+        this.keys.LEFT.on("up", () => this.handleLeftReleased());
+        this.keys.RIGHT.on("down", () => this.handleRightPressed());
+        this.keys.RIGHT.on("up", () => this.handleRightReleased());
+
         this.keys.SPACE.on("down", () => this.resetBody());
     }
-
     // --- Helpers: parts with FIXTURE filtering correctly applied ---
     makePartRect(key, xPx, yPx, wPx, hPx, density = 1.0, friction = 0.6, restitution = 0.1) {
         const body = this.world.createBody({
@@ -199,172 +215,13 @@ export default class MainScene extends Phaser.Scene {
         return { body, sprite, fix };
     }
 
-    /*
-BODY PART DIMENSIONS
-body: 222 x 435 1.959
-thigh: 120 x 153 1.275
-leg: 68 x 183 2.651
-foot: 148 x 64 .432 
-upperArm: 112 x 189 1.6875
-lowerArm: 100 x 212 2.12
-head: 180 x 237 1.316
-    */
 
-    createBodiesAndJoints() {
-        const S = {
-            body: { w: 71, h: 140 },
-            thigh: { w: 62, h: 80 },
-            leg: { w: 30, h: 80 },
-            foot: { w: 50, h: 23 },
-            upperArm: { w: 47, h: 80 },
-            lowerArm: { w: 43, h: 80 },
-            head: { r: 35 }
-        };
 
-        // Arms
-        this.lowerLeftArm = this.makePartRect("lowerArm", originX + lowerLeftArmOffset.x, originY + lowerLeftArmOffset.y, S.lowerArm.w, S.lowerArm.h);
-        this.upperLeftArm = this.makePartRect("upperArm", originX + upperLeftArmOffset.x, originY + upperLeftArmOffset.y, S.upperArm.w, S.upperArm.h);
-
-        // Legs
-        this.leftFoot = this.makePartRect("foot", originX + leftFootOffset.x, originY + leftFootOffset.y, S.foot.w, S.foot.h);
-        this.leftLeg = this.makePartRect("leg", originX + leftLegOffset.x, originY + leftLegOffset.y, S.leg.w, S.leg.h);
-        this.leftThigh = this.makePartRect("thigh", originX + leftThighOffset.x, originY + leftThighOffset.y, S.thigh.w, S.thigh.h);
-
-        this.rightFoot = this.makePartRect("foot", originX + rightFootOffset.x, originY + rightFootOffset.y, S.foot.w, S.foot.h);
-        this.rightLeg = this.makePartRect("leg", originX + rightLegOffset.x, originY + rightLegOffset.y, S.leg.w, S.leg.h);
-        this.rightThigh = this.makePartRect("thigh", originX + rightThighOffset.x, originY + rightThighOffset.y, S.thigh.w, S.thigh.h);
-
-        // body + head
-        this.head = this.makePartCircle("head", originX + headOffset.x, originY + headOffset.y, S.head.r, 0.8);
-
-        this.back = this.makePartRect("body", originX + backOffset.x, originY + backOffset.y, 50, 90, 1.2);
-        this.pelvis = this.makePartRect("body", originX + pelvisOffset.x, originY + pelvisOffset.y, 55, 55, 1.2);
-
-        this.lowerRightArm = this.makePartRect("lowerArm", originX + lowerRightArmOffset.x, originY + lowerRightArmOffset.y, S.lowerArm.w, S.lowerArm.h);
-        this.upperRightArm = this.makePartRect("upperArm", originX + upperRightArmOffset.x, originY + upperRightArmOffset.y, S.upperArm.w, S.upperArm.h);
-
-        const v = (xPx, yPx) => pl.Vec2(px2m(xPx), px2m(yPx));
-
-        // Neck weld
-        this.neck = this.world.createJoint(pl.WeldJoint({}, this.head.body, this.back.body, v(originX, originY - 35)));
-        // Shoulders
-        this.rightShoulder = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: shoulderLimits[0], upperAngle: shoulderLimits[1]
-        }, this.upperRightArm.body, this.back.body, v(originX, originY - 40)));
-
-        this.leftShoulder = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: shoulderLimits[0], upperAngle: shoulderLimits[1]
-        }, this.upperLeftArm.body, this.back.body, v(originX, originY - 40)));
-
-        // Elbows (disabled by default)
-        this.rightElbow = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: false, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: elbowLimits[0], upperAngle: elbowLimits[1]
-        }, this.upperRightArm.body, this.lowerRightArm.body, v(originX, originY + 10)));
-
-        this.leftElbow = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: false, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: elbowLimits[0], upperAngle: elbowLimits[1]
-        }, this.upperLeftArm.body, this.lowerLeftArm.body, v(originX, originY + 10)));
-
-        // hipBack (Back <-> Pelvis)
-        this.hipBack = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true,
-            motorSpeed: 0,
-            maxMotorTorque: motorTorque,
-            enableLimit: true,
-            lowerAngle: hipLimits[0],
-            upperAngle: hipLimits[1]
-        }, this.back.body, this.pelvis.body, v(originX, originY + 10)));
-
-        // hipLeg joints (Pelvis <-> Thigh)
-        this.leftHipLeg = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true,
-            motorSpeed: 0,
-            maxMotorTorque: motorTorque,
-            enableLimit: true,
-            lowerAngle: pelvisLimits[0],
-            upperAngle: pelvisLimits[1]
-        }, this.pelvis.body, this.leftThigh.body, v(originX - 10, originY + 60)));
-
-        this.rightHipLeg = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true,
-            motorSpeed: 0,
-            maxMotorTorque: motorTorque,
-            enableLimit: true,
-            lowerAngle: pelvisLimits[0],
-            upperAngle: pelvisLimits[1]
-        }, this.pelvis.body, this.rightThigh.body, v(originX + 10, originY + 60)));
-
-        // Knees
-        this.rightKnee = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: kneeLimits[0], upperAngle: kneeLimits[1]
-        }, this.rightThigh.body, this.rightLeg.body, v(originX - 10, originY + 110)));
-
-        this.leftKnee = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: kneeLimits[0], upperAngle: kneeLimits[1]
-        }, this.leftThigh.body, this.leftLeg.body, v(originX + 10, originY + 110)));
-
-        // Ankles
-        this.rightAnkle = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: ankleLimits[0], upperAngle: ankleLimits[1]
-        }, this.rightLeg.body, this.rightFoot.body, v(originX + 10, originY + 190)));
-
-        this.leftAnkle = this.world.createJoint(pl.RevoluteJoint({
-            enableMotor: true, motorSpeed: 0, maxMotorTorque: motorTorque,
-            enableLimit: true, lowerAngle: ankleLimits[0], upperAngle: ankleLimits[1]
-        }, this.leftLeg.body, this.leftFoot.body, v(originX - 20, originY + 185)));
-    }
-
-    // --- fixed-step stepping ---
-    stepWorld(dtSec) {
-        const fixed = 1 / 60;
-        dtSec = Math.min(dtSec, 1 / 30); // clamp spikes harder
-
-        this._accum += dtSec;
-
-        const velIters = 20;
-        const posIters = 10;
-
-        while (this._accum >= fixed) {
-            this.world.step(fixed, velIters, posIters);
-            this._accum -= fixed;
-        }
-    }
-
-    syncSprites() {
-        const sync = (part) => {
-            const p = part.body.getPosition();
-            part.sprite.x = m2px(p.x);
-            part.sprite.y = m2px(p.y);
-            part.sprite.rotation = part.body.getAngle();
-        };
-
-        sync(this.head);
-        sync(this.back);
-        sync(this.pelvis);
-        sync(this.upperLeftArm);
-        sync(this.lowerLeftArm);
-        sync(this.upperRightArm);
-        sync(this.lowerRightArm);
-        sync(this.leftThigh);
-        sync(this.leftLeg);
-        sync(this.leftFoot);
-        sync(this.rightThigh);
-        sync(this.rightLeg);
-        sync(this.rightFoot);
-    }
 
     // --- controls ---
     handleQPressed() {
-        this.rightHipLeg.setMotorSpeed(+walkSpeed);
-        this.leftHipLeg.setMotorSpeed(-walkSpeed);
-        this.hipBack.setMotorSpeed(-walkSpeed * 0.6); // counter lean
+        this.rightHipLeg.setMotorSpeed(-walkSpeed);
+        this.leftHipLeg.setMotorSpeed(+walkSpeed);
         this.leftShoulder.setMotorSpeed(+walkSpeed);
         this.rightShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "Q";
@@ -398,9 +255,9 @@ head: 180 x 237 1.316
     }
 
     handleWPressed() {
-        this.rightHipLeg.setMotorSpeed(-walkSpeed);
-        this.leftHipLeg.setMotorSpeed(+walkSpeed);
-        this.hipBack.setMotorSpeed(+walkSpeed * 0.6);
+        this.rightHipLeg.setMotorSpeed(+walkSpeed);
+        this.leftHipLeg.setMotorSpeed(-walkSpeed);
+        this.hipBack.setMotorSpeed(+walkSpeed);
         this.rightShoulder.setMotorSpeed(+walkSpeed);
         this.leftShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "W";
@@ -433,6 +290,24 @@ head: 180 x 237 1.316
         this.keyState = "";
     }
 
+    handleRightPressed() {
+        console.log('right');
+        this.houses.x += cameraScrollX * this.SCROLL_FACTOR.HOUSES;
+        this.foliage.x += cameraScrollX * this.SCROLL_FACTOR.FOLIAGE;
+        this.sidewalk.x += cameraScrollX * this.SCROLL_FACTOR.SIDEWALK;
+        this.grass.x += cameraScrollX * this.SCROLL_FACTOR.GRASS;
+    }
+    handleRightReleased() {
+    }
+    handleLeftPressed() {
+        this.houses.x -= cameraScrollX * this.SCROLL_FACTOR.HOUSES;
+        this.foliage.x -= cameraScrollX * this.SCROLL_FACTOR.FOLIAGE;
+        this.sidewalk.x -= cameraScrollX * this.SCROLL_FACTOR.SIDEWALK;
+        this.grass.x -= cameraScrollX * this.SCROLL_FACTOR.GRASS;
+    }
+    handleLeftReleased() {
+    }
+
     resetBody() {
         const set = (part, xPx, yPx) => {
             part.body.setTransform(pl.Vec2(px2m(xPx), px2m(yPx)), 0);
@@ -441,7 +316,7 @@ head: 180 x 237 1.316
         };
 
         set(this.head, originX + headOffset.x, originY + headOffset.y);
-        set(this.back, originX + backOffset.x, originY + backOffset.y);
+        set(this.body, originX + backOffset.x, originY + backOffset.y);
         set(this.pelvis, originX + pelvisOffset.x, originY + pelvisOffset.y);
 
         set(this.rightThigh, originX + rightThighOffset.x, originY + rightThighOffset.y);
@@ -467,11 +342,11 @@ head: 180 x 237 1.316
 
     updateHud() {
         const t = (Date.now() - this.nowMs) / 1000;
-        const vx = this.head.body.getLinearVelocity().x;
-        const dist = (this.back.sprite.x - originX) / PPM;
+        const vx = this.runner.head.body.getLinearVelocity().x;
+        this.dist = (this.runner.body.sprite.x - originX) / PPM;
 
-        this.bestDist = Math.max(this.bestDist, dist);
-        this.totalDist = dist;
+        this.bestDist = Math.max(this.bestDist, this.dist);
+        this.totalDist = this.dist;
         this.velX = vx;
 
         this.bestDistText.setText("Best Distance: " + Math.floor(this.bestDist) + " m");
@@ -480,13 +355,23 @@ head: 180 x 237 1.316
         this.velocityText.setText("Velocity: " + (Math.round(this.velX * 10) / 10) + " m/s");
         this.keyStateText.setText("Keystate: " + this.keyState);
     }
-
+    updateCamera(dt) {
+        // Use horizontal velocity (QWOP-style movement)
+        this.cameraScrollX += this.runner.vx * dt;
+    }
     update(_, deltaMs) {
-        this.stepWorld(deltaMs / 1000);
-        this.syncSprites();
+        this.runner.stepWorld(deltaMs / 1000);
+        this.runner.syncSprites();
         this.updateHud();
+        this.updateCamera(deltaMs);
+        const background = Math.floor(this.dist / 3);
+        if (background > this.currentBackground && background < 20) {
+            this.currentBackground = background;
+            this.bg.setTexture("background-" + this.currentBackground);
+            this.bg.setDisplaySize(W, H);
+        }
 
-        if (this.head.sprite.y > this.groundYpx - 60) {
+        if (this.runner.head.sprite.y > this.groundYpx - 60) {
             this.resetBody();
         }
     }

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phaser Sidewalk Vanishing Point Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #101214;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        #game {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game"></div>
+
+    <script>
+        class SidewalkScene extends Phaser.Scene {
+            constructor() {
+                super("SidewalkScene");
+            }
+
+            create() {
+                this.W = this.scale.width;
+                this.H = this.scale.height;
+
+                this.g = this.add.graphics();
+
+                this.horizonY = this.H * 0.30;
+                this.bottomY = this.H * 0.98;
+
+                this.vanishX = this.W * 0.5;
+                this.walkBottomOffset = 0;
+
+                this.vanishSpeed = 0;
+                this.bottomSpeed = 0;
+
+                this.maxVanishSpeed = 260;
+                this.maxBottomSpeed = 720;
+
+                this.sideAccel = 1100;
+                this.sideDrag = 1500;
+
+                this.verticalOffset = 0;
+                this.verticalSpeed = 0;
+                this.maxVerticalSpeed = 360;
+                this.verticalAccel = 900;
+                this.verticalDrag = 1300;
+                this.maxVerticalOffset = this.H * 0.18;
+
+                this.walkTopHalf = 0;
+                this.walkBottomHalf = this.W * 0.20;
+
+                this.curbTop = 0;
+                this.curbBottom = 18;
+
+                this.segmentCount = 54;
+                this.scrollPhase = 0;
+                this.scrollSpeed = 18;
+
+                this.skyTop = 0x5d8de6;
+                this.skyBottom = 0xdcecff;
+                this.grassColor = 0x4a8340;
+
+                this.sidewalkLight = 0xd4d4d4;
+                this.sidewalkDark = 0xc0c0c0;
+                this.jointColor = 0x9f9f9f;
+                this.curbColor = 0xefefef;
+                this.shadowColor = 0x8c8c8c;
+
+                this.keys = this.input.keyboard.createCursorKeys();
+
+                this.helpText = this.add.text(
+                    16,
+                    16,
+                    "LEFT / RIGHT: move vanishing point\nUP / DOWN: shift sidewalk section heights",
+                    {
+                        fontFamily: "Arial",
+                        fontSize: "20px",
+                        color: "#ffffff",
+                        lineSpacing: 6
+                    }
+                ).setDepth(20);
+
+                this.scale.on("resize", this.handleResize, this);
+            }
+
+            handleResize(gameSize) {
+                this.W = gameSize.width;
+                this.H = gameSize.height;
+
+                this.horizonY = this.H * 0.30;
+                this.bottomY = this.H * 0.98;
+                this.maxVerticalOffset = this.H * 0.18;
+
+                this.walkBottomHalf = this.W * 0.20;
+
+                this.helpText.setPosition(16, 16);
+            }
+
+            update(time, delta) {
+                const dt = delta / 1000;
+
+                this.updateHorizontal(dt);
+                this.updateVertical(dt);
+
+                this.scrollPhase += this.scrollSpeed * dt;
+                this.drawScene();
+            }
+
+            updateHorizontal(dt) {
+                let dir = 0;
+                if (this.keys.left.isDown) dir -= 1;
+                if (this.keys.right.isDown) dir += 1;
+
+                if (dir !== 0) {
+                    this.vanishSpeed += dir * this.sideAccel * dt;
+                    this.bottomSpeed += dir * this.sideAccel * 2.4 * dt;
+                } else {
+                    this.vanishSpeed = this.applyDrag(this.vanishSpeed, this.sideDrag, dt);
+                    this.bottomSpeed = this.applyDrag(this.bottomSpeed, this.sideDrag * 1.15, dt);
+                }
+
+                this.vanishSpeed = Phaser.Math.Clamp(
+                    this.vanishSpeed,
+                    -this.maxVanishSpeed,
+                    this.maxVanishSpeed
+                );
+
+                this.bottomSpeed = Phaser.Math.Clamp(
+                    this.bottomSpeed,
+                    -this.maxBottomSpeed,
+                    this.maxBottomSpeed
+                );
+
+                this.vanishX += this.vanishSpeed * dt;
+                this.walkBottomOffset += this.bottomSpeed * dt;
+
+                if (this.vanishX < 0) this.vanishX = this.W;
+                if (this.vanishX > this.W) this.vanishX = 0;
+
+                const wrap = this.W * 1.5;
+                if (this.walkBottomOffset < -wrap) this.walkBottomOffset += wrap * 2;
+                if (this.walkBottomOffset > wrap) this.walkBottomOffset -= wrap * 2;
+
+                // Keep the bottom centered when the vanishing point is centered.
+                // The offset only applies relative to the center baseline.
+                this.bottomCenterX = (this.W * 0.5) + this.walkBottomOffset;
+            }
+
+            updateVertical(dt) {
+                let vdir = 0;
+                if (this.keys.up.isDown) vdir -= 1;
+                if (this.keys.down.isDown) vdir += 1;
+
+                if (vdir !== 0) {
+                    this.verticalSpeed += vdir * this.verticalAccel * dt;
+                } else {
+                    this.verticalSpeed = this.applyDrag(this.verticalSpeed, this.verticalDrag, dt);
+                }
+
+                this.verticalSpeed = Phaser.Math.Clamp(
+                    this.verticalSpeed,
+                    -this.maxVerticalSpeed,
+                    this.maxVerticalSpeed
+                );
+
+                this.verticalOffset += this.verticalSpeed * dt;
+                this.verticalOffset = Phaser.Math.Clamp(
+                    this.verticalOffset,
+                    -this.maxVerticalOffset,
+                    this.maxVerticalOffset
+                );
+            }
+
+            applyDrag(v, drag, dt) {
+                if (v > 0) return Math.max(0, v - drag * dt);
+                if (v < 0) return Math.min(0, v + drag * dt);
+                return 0;
+            }
+
+            drawScene() {
+                this.g.clear();
+
+                this.drawSky();
+                this.drawGround();
+                this.drawSidewalk();
+                //this.drawHaze();
+                this.drawMarker();
+            }
+
+            drawSky() {
+                const g = this.g;
+
+                g.fillGradientStyle(
+                    this.skyTop, this.skyTop,
+                    this.skyBottom, this.skyBottom,
+                    1, 1, 1, 1
+                );
+                g.fillRect(0, 0, this.W, this.horizonY);
+            }
+
+            drawGround() {
+                const g = this.g;
+
+                g.fillStyle(this.grassColor, 1);
+                g.fillRect(0, this.horizonY, this.W, this.H - this.horizonY);
+            }
+
+            drawSidewalk() {
+                const g = this.g;
+
+                const topCenterX = this.vanishX;
+                const bottomCenterX = this.bottomCenterX;
+
+                const leftTopX = topCenterX - this.walkTopHalf;
+                const rightTopX = topCenterX + this.walkTopHalf;
+                const leftBottomX = bottomCenterX - this.walkBottomHalf;
+                const rightBottomX = bottomCenterX + this.walkBottomHalf;
+
+                const curbLeftTopX = topCenterX - this.curbTop;
+                const curbRightTopX = topCenterX + this.curbTop;
+                const curbLeftBottomX = leftBottomX - this.curbBottom;
+                const curbRightBottomX = rightBottomX + this.curbBottom;
+
+                for (let i = this.segmentCount; i >= 1; i--) {
+                    const t0 = (i - 1) / this.segmentCount;
+                    const t1 = i / this.segmentCount;
+
+                    let y0 = Phaser.Math.Linear(this.horizonY, this.bottomY, t0 * t0);
+                    let y1 = Phaser.Math.Linear(this.horizonY, this.bottomY, t1 * t1);
+
+                    const lift0 = this.verticalOffset * (1 - t0);
+                    const lift1 = this.verticalOffset * (1 - t1);
+
+                    y0 += lift0;
+                    y1 += lift1;
+
+                    const u0 = Phaser.Math.Clamp((y0 - this.horizonY) / (this.bottomY - this.horizonY), 0, 1);
+                    const u1 = Phaser.Math.Clamp((y1 - this.horizonY) / (this.bottomY - this.horizonY), 0, 1);
+
+                    const l0 = Phaser.Math.Linear(leftTopX, leftBottomX, u0);
+                    const l1 = Phaser.Math.Linear(leftTopX, leftBottomX, u1);
+
+                    const r0 = Phaser.Math.Linear(rightTopX, rightBottomX, u0);
+                    const r1 = Phaser.Math.Linear(rightTopX, rightBottomX, u1);
+
+                    const cl0 = Phaser.Math.Linear(curbLeftTopX, curbLeftBottomX, u0);
+                    const cl1 = Phaser.Math.Linear(curbLeftTopX, curbLeftBottomX, u1);
+
+                    const cr0 = Phaser.Math.Linear(curbRightTopX, curbRightBottomX, u0);
+                    const cr1 = Phaser.Math.Linear(curbRightTopX, curbRightBottomX, u1);
+
+                    const slabOn = ((i + Math.floor(this.scrollPhase)) % 2) === 0;
+
+                    g.fillStyle(slabOn ? this.sidewalkLight : this.sidewalkDark, 1);
+                    g.beginPath();
+                    g.moveTo(l0, y0);
+                    g.lineTo(r0, y0);
+                    g.lineTo(r1, y1);
+                    g.lineTo(l1, y1);
+                    g.closePath();
+                    g.fillPath();
+
+                    g.fillStyle(this.curbColor, 1);
+                    g.beginPath();
+                    g.moveTo(cl0, y0);
+                    g.lineTo(l0, y0);
+                    g.lineTo(l1, y1);
+                    g.lineTo(cl1, y1);
+                    g.closePath();
+                    g.fillPath();
+
+                    g.beginPath();
+                    g.moveTo(r0, y0);
+                    g.lineTo(cr0, y0);
+                    g.lineTo(cr1, y1);
+                    g.lineTo(r1, y1);
+                    g.closePath();
+                    g.fillPath();
+
+                    g.lineStyle(1, this.jointColor, 0.95);
+                    g.beginPath();
+                    g.moveTo(l1, y1);
+                    g.lineTo(r1, y1);
+                    g.strokePath();
+
+                    const seamX0 = Phaser.Math.Linear(l0, r0, 0.5);
+                    const seamX1 = Phaser.Math.Linear(l1, r1, 0.5);
+
+                    g.lineStyle(1, this.jointColor, 0.5);
+                    g.beginPath();
+                    g.moveTo(seamX0, y0);
+                    g.lineTo(seamX1, y1);
+                    g.strokePath();
+
+                    g.lineStyle(1, this.shadowColor, 0.25);
+                    g.beginPath();
+                    g.moveTo(cl1, y1 + 1);
+                    g.lineTo(cr1, y1 + 1);
+                    g.strokePath();
+                }
+            }
+
+            drawHaze() {
+                const g = this.g;
+                const hazeTop = this.horizonY - this.H * 0.04;
+                const hazeHeight = this.H * 0.13;
+
+                g.fillGradientStyle(
+                    0xdfe9f7, 0xdfe9f7,
+                    0xffffff, 0xffffff,
+                    0.00, 0.00, 0.72, 0.72
+                );
+                g.fillRect(0, hazeTop, this.W, hazeHeight);
+
+                g.fillGradientStyle(
+                    0xffffff, 0xffffff,
+                    0xffffff, 0xffffff,
+                    0.0, 0.0, 0.24, 0.24
+                );
+                g.fillRect(0, this.horizonY - 2, this.W, this.H * 0.06);
+            }
+
+            drawMarker() {
+                const g = this.g;
+
+                g.lineStyle(2, 0xffffff, 0.10);
+                g.beginPath();
+                g.moveTo(0, this.horizonY);
+                g.lineTo(this.W, this.horizonY);
+                g.strokePath();
+
+                g.fillStyle(0xff6666, 0.9);
+                g.fillCircle(this.vanishX, this.horizonY, 4);
+            }
+        }
+
+        const config = {
+            type: Phaser.AUTO,
+            parent: "game",
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: "#000000",
+            scene: [SidewalkScene],
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            }
+        };
+
+        new Phaser.Game(config);
+    </script>
+</body>
+
+</html>

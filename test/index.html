@@ -1,10 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
 
-<html>
-  <head>
-  <script src="./../js/phaser.min.js"></script>
-  <script src="./../js/box2d-plugin-full.min.js"></script>
-  
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phaser Parallax Viewer</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #game {
+            width: 100%;
+            height: 100%;
+        }
+
+        .hint {
+            position: fixed;
+            left: 12px;
+            bottom: 12px;
+            z-index: 10;
+            color: #fff;
+            font: 14px Arial, sans-serif;
+            background: rgba(0, 0, 0, 0.45);
+            padding: 8px 10px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+    </style>
 </head>
+
 <body>
-    <script src="game.js"></script>
-</body></html>
+    <div id="game"></div>
+    <div class="hint">Drag, swipe, mouse wheel, or use ← →</div>
+
+    <script>
+        class ParallaxViewerScene extends Phaser.Scene {
+            constructor() {
+                super("ParallaxViewerScene");
+            }
+
+            preload() {
+                this.load.image("layer1", "../assets/images/background/neighborhood_parallax_layers/layer01.png");
+                this.load.image("layer2", "../assets/images/background/neighborhood_parallax_layers/layer02.png");
+                this.load.image("layer3", "../assets/images/background/neighborhood_parallax_layers/layer03.png");
+                this.load.image("layer4", "../assets/images/background/neighborhood_parallax_layers/layer04.png");
+                this.load.image("layer5", "../assets/images/background/neighborhood_parallax_layers/layer05.png");
+            }
+
+            create() {
+                this.scrollXWorld = 0;
+                this.velocity = 0;
+
+                const STRIP_HEIGHT = 120;
+
+                this.layers = [
+                    { key: "layer1", factor: 0.2 },
+                    { key: "layer2", factor: 0.4 },
+                    { key: "layer3", factor: 0.6 },
+                    { key: "layer4", factor: 0.8 },
+                    { key: "layer5", factor: 1.0 }
+                ].map((def, i) => {
+
+                    const img = this.add.image(0, i * STRIP_HEIGHT, def.key).setOrigin(0, 0);
+
+                    const tex = this.textures.get(def.key).getSourceImage();
+                    const scale = STRIP_HEIGHT / tex.height;
+
+                    img.setScale(scale);
+
+                    return {
+                        image: img,
+                        factor: def.factor,
+                        width: tex.width * scale
+                    };
+                });
+
+                // keyboard input
+                this.cursors = this.input.keyboard.createCursorKeys();
+
+                // mouse drag
+                this.input.on("pointermove", (p) => {
+                    if (!p.isDown) return;
+                    this.scrollXWorld -= p.velocity.x * 0.02;
+                });
+
+                // mouse wheel
+                this.input.on("wheel", (p, g, dx, dy) => {
+                    this.scrollXWorld += dx + dy;
+                });
+            }
+
+            update() {
+                const SPEED = 10;
+
+                if (this.cursors.left.isDown) this.scrollXWorld -= SPEED;
+                if (this.cursors.right.isDown) this.scrollXWorld += SPEED;
+
+                for (const layer of this.layers) {
+                    layer.image.x = -this.scrollXWorld * layer.factor;
+                }
+            }
+        }
+
+        const config = {
+            type: Phaser.CANVAS,
+            parent: "game",
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: "#000000",
+            scale: {
+                mode: Phaser.Scale.RESIZE,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            scene: [ParallaxViewerScene]
+        };
+
+        new Phaser.Game(config);
+    </script>
+</body>
+
+</html>
