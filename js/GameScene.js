@@ -1,16 +1,5 @@
 import { Runner } from "./Runner.js";
-const W = 800;
-const H = 600;
-
-const PPM = 30;
-
-const px2m = (px) => px / PPM;
-const originX = W * .3;
-const originY = 295;
-
-// --- Controls / tuning ---
-const walkSpeed = 4;
-const motorTorque = 420;
+import { SCROLL_FACTOR, LAYER_HEIGHT, originX, originY, PPM, px2m } from "./config.js";
 
 
 // --- Categories / masks (FIXED) ---
@@ -50,45 +39,30 @@ export default class MainScene extends Phaser.Scene {
         const H = this.scale.height;
         this.cameraScrollX = 0;
 
-        this.SCROLL_FACTOR = {
-            HOUSES: 0.05,
-            FENCE: 0.25,
-            FOLIAGE: 0.55,
-            SIDEWALK: 1,
-            GRASS: 1.2
-        };
-
-        this.LAYER_HEIGHT = {
-            HOUSES: 471,
-            FENCE: 493,
-            FOLIAGE: 192,
-            SIDEWALK: 139,
-            GRASS: 247
-        }
         this.BackgroundHeight = 1024;
         const backgroundResizeY = this.BackgroundHeight / 600;
 
-        const houseHeight = this.LAYER_HEIGHT.HOUSES / this.BackgroundHeight * (backgroundResizeY);
+        const houseHeight = LAYER_HEIGHT.HOUSES / this.BackgroundHeight * (backgroundResizeY);
         this.houses = this.add.image(0, 0, "houses_layer")
             .setOrigin(0, 0)
             .setScale(1, houseHeight);
 
-        const fenceHeight = this.LAYER_HEIGHT.FENCE / this.BackgroundHeight * (backgroundResizeY);
+        const fenceHeight = LAYER_HEIGHT.FENCE / this.BackgroundHeight * (backgroundResizeY);
         this.fence = this.add.image(0, 20, "fence_layer")
             .setOrigin(0, 0)
             .setScale(1, fenceHeight);
 
-        const foliageHeight = this.LAYER_HEIGHT.FOLIAGE / this.BackgroundHeight * (backgroundResizeY);
+        const foliageHeight = LAYER_HEIGHT.FOLIAGE / this.BackgroundHeight * (backgroundResizeY);
         this.foliage = this.add.image(0, 400, "foliage_layer")
             .setOrigin(0, 0)
             .setScale(1, foliageHeight);
 
-        const sidewalkHeight = this.LAYER_HEIGHT.SIDEWALK / this.BackgroundHeight * (backgroundResizeY);
+        const sidewalkHeight = LAYER_HEIGHT.SIDEWALK / this.BackgroundHeight * (backgroundResizeY);
         this.sidewalk = this.add.image(0, 460, "sidewalk_layer")
             .setOrigin(0, 0)
             .setScale(1, sidewalkHeight);
 
-        const grassHeight = this.LAYER_HEIGHT.GRASS / this.BackgroundHeight * (backgroundResizeY);
+        const grassHeight = LAYER_HEIGHT.GRASS / this.BackgroundHeight * (backgroundResizeY);
         this.grass = this.add.image(0, 480, "grass_layer")
             .setOrigin(0, 0)
             .setScale(1, grassHeight);
@@ -137,11 +111,11 @@ export default class MainScene extends Phaser.Scene {
         this.bestDist = 0;
         this.totalDist = 0;
         this.velX = 0;
-        this.bestDistText = this.add.text(50, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
-        this.timeText = this.add.text(350, 30, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
-        this.totalDistText = this.add.text(50, 60, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
-        this.velocityText = this.add.text(350, 60, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
-        this.keyStateText = this.add.text(50, 90, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.bestDistText = this.add.text(5, 5, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.timeText = this.add.text(500, 5, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.totalDistText = this.add.text(5, 40, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        this.velocityText = this.add.text(500, 40, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
+        //   this.keyStateText = this.add.text(50, 90, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
 
         // --- input ---
         this.keys = this.input.keyboard.addKeys({
@@ -171,7 +145,7 @@ export default class MainScene extends Phaser.Scene {
         this.keys.RIGHT.on("down", () => this.handleRightPressed());
         this.keys.RIGHT.on("up", () => this.handleRightReleased());
 
-        this.keys.SPACE.on("down", () => this.resetBody());
+        this.keys.SPACE.on("down", () => this.runner.resetBody());
     }
     // --- Helpers: parts with FIXTURE filtering correctly applied ---
     makePartRect(key, xPx, yPx, wPx, hPx, density = 1.0, friction = 0.6, restitution = 0.1) {
@@ -227,133 +201,98 @@ export default class MainScene extends Phaser.Scene {
         return { body, sprite, fix };
     }
 
-
-
-
     // --- controls ---
     handleQPressed() {
-        this.joints.rightHipLeg.setMotorSpeed(-walkSpeed);
-        this.leftHipLeg.setMotorSpeed(+walkSpeed);
-        this.leftShoulder.setMotorSpeed(+walkSpeed);
-        this.rightShoulder.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightHipLeg.setMotorSpeed(-walkSpeed);
+        this.runner.joints.leftHipLeg.setMotorSpeed(+walkSpeed);
+        this.runner.joints.leftShoulder.setMotorSpeed(+walkSpeed);
+        this.runner.joints.rightShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "Q";
     }
     handleQReleased() {
-        this.rightHipLeg.setMotorSpeed(0);
-        this.leftHipLeg.setMotorSpeed(0);
-        this.hipBack.setMotorSpeed(0);
-        this.leftShoulder.setMotorSpeed(0);
-        this.rightShoulder.setMotorSpeed(0);
+        this.runner.joints.rightHipLeg.setMotorSpeed(0);
+        this.runner.joints.leftHipLeg.setMotorSpeed(0);
+        this.runner.joints.hipBack.setMotorSpeed(0);
+        this.runner.joints.leftShoulder.setMotorSpeed(0);
+        this.runner.joints.rightShoulder.setMotorSpeed(0);
         this.keyState = "";
     }
 
     handleOPressed() {
-        this.leftKnee.setMotorSpeed(+walkSpeed);
-        this.rightKnee.setMotorSpeed(-walkSpeed);
-        this.rightElbow.enableMotor(true);
-        this.leftElbow.enableMotor(true);
-        this.rightElbow.setMotorSpeed(+walkSpeed);
-        this.leftElbow.setMotorSpeed(-walkSpeed);
+        this.runner.joints.leftKnee.setMotorSpeed(+walkSpeed);
+        this.runner.joints.rightKnee.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightElbow.enableMotor(true);
+        this.runner.joints.leftElbow.enableMotor(true);
+        this.runner.joints.rightElbow.setMotorSpeed(+walkSpeed);
+        this.runner.joints.leftElbow.setMotorSpeed(-walkSpeed);
         this.keyState = "O";
     }
     handleOReleased() {
-        this.leftKnee.setMotorSpeed(0);
-        this.rightKnee.setMotorSpeed(0);
-        this.rightElbow.setMotorSpeed(0);
-        this.leftElbow.setMotorSpeed(0);
-        this.rightElbow.enableMotor(false);
-        this.leftElbow.enableMotor(false);
+        this.runner.joints.leftKnee.setMotorSpeed(0);
+        this.runner.joints.rightKnee.setMotorSpeed(0);
+        this.runner.joints.rightElbow.setMotorSpeed(0);
+        this.runner.joints.leftElbow.setMotorSpeed(0);
+        this.runner.joints.rightElbow.enableMotor(false);
+        this.runner.joints.leftElbow.enableMotor(false);
         this.keyState = "";
     }
 
     handleWPressed() {
-        this.rightHipLeg.setMotorSpeed(+walkSpeed);
-        this.leftHipLeg.setMotorSpeed(-walkSpeed);
-        this.hipBack.setMotorSpeed(+walkSpeed);
-        this.rightShoulder.setMotorSpeed(+walkSpeed);
-        this.leftShoulder.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightHipLeg.setMotorSpeed(+walkSpeed);
+        this.runner.joints.leftHipLeg.setMotorSpeed(-walkSpeed);
+        this.runner.joints.hipBack.setMotorSpeed(+walkSpeed);
+        this.runner.joints.rightShoulder.setMotorSpeed(+walkSpeed);
+        this.runner.joints.leftShoulder.setMotorSpeed(-walkSpeed);
         this.keyState = "W";
     }
     handleWReleased() {
-        this.rightHipLeg.setMotorSpeed(0);
-        this.leftHipLeg.setMotorSpeed(0);
-        this.hipBack.setMotorSpeed(0);
-        this.rightShoulder.setMotorSpeed(0);
-        this.leftShoulder.setMotorSpeed(0);
+        this.runner.joints.rightHipLeg.setMotorSpeed(0);
+        this.runner.joints.leftHipLeg.setMotorSpeed(0);
+        this.runner.joints.hipBack.setMotorSpeed(0);
+        this.runner.joints.rightShoulder.setMotorSpeed(0);
+        this.runner.joints.leftShoulder.setMotorSpeed(0);
         this.keyState = "";
     }
 
     handlePPressed() {
-        this.rightKnee.setMotorSpeed(+walkSpeed);
-        this.leftKnee.setMotorSpeed(-walkSpeed);
-        this.leftElbow.enableMotor(true);
-        this.rightElbow.enableMotor(true);
-        this.leftElbow.setMotorSpeed(+walkSpeed);
-        this.rightElbow.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightKnee.setMotorSpeed(+walkSpeed);
+        this.runner.joints.leftKnee.setMotorSpeed(-walkSpeed);
+        this.runner.joints.leftElbow.enableMotor(true);
+        this.runner.joints.rightElbow.enableMotor(true);
+        this.runner.joints.leftElbow.setMotorSpeed(+walkSpeed);
+        this.runner.joints.rightElbow.setMotorSpeed(-walkSpeed);
         this.keyState = "P";
     }
     handlePReleased() {
-        this.rightKnee.setMotorSpeed(0);
-        this.leftKnee.setMotorSpeed(0);
-        this.leftElbow.setMotorSpeed(0);
-        this.rightElbow.setMotorSpeed(0);
-        this.leftElbow.enableMotor(false);
-        this.rightElbow.enableMotor(false);
+        this.runner.joints.rightKnee.setMotorSpeed(0);
+        this.runner.joints.leftKnee.setMotorSpeed(0);
+        this.runner.joints.leftElbow.setMotorSpeed(0);
+        this.runner.joints.rightElbow.setMotorSpeed(0);
+        this.runner.joints.leftElbow.enableMotor(false);
+        this.runner.joints.rightElbow.enableMotor(false);
         this.keyState = "";
     }
 
     handleRightPressed() {
-        console.log('right');
-        this.houses.x += cameraScrollX * this.SCROLL_FACTOR.HOUSES;
-        this.foliage.x += cameraScrollX * this.SCROLL_FACTOR.FOLIAGE;
-        this.sidewalk.x += cameraScrollX * this.SCROLL_FACTOR.SIDEWALK;
-        this.grass.x += cameraScrollX * this.SCROLL_FACTOR.GRASS;
+        this.runner.x++;
+        this.houses.x += this.cameraScrollX * SCROLL_FACTOR.HOUSES;
+        this.foliage.x += this.cameraScrollX * SCROLL_FACTOR.FOLIAGE;
+        this.sidewalk.x += this.cameraScrollX * SCROLL_FACTOR.SIDEWALK;
+        this.grass.x += this.cameraScrollX * SCROLL_FACTOR.GRASS;
     }
     handleRightReleased() {
     }
     handleLeftPressed() {
-        this.houses.x -= cameraScrollX * this.SCROLL_FACTOR.HOUSES;
-        this.foliage.x -= cameraScrollX * this.SCROLL_FACTOR.FOLIAGE;
-        this.sidewalk.x -= cameraScrollX * this.SCROLL_FACTOR.SIDEWALK;
-        this.grass.x -= cameraScrollX * this.SCROLL_FACTOR.GRASS;
+        this.houses.x -= this.cameraScrollX * SCROLL_FACTOR.HOUSES;
+        this.foliage.x -= this.cameraScrollX * SCROLL_FACTOR.FOLIAGE;
+        this.sidewalk.x -= this.cameraScrollX * SCROLL_FACTOR.SIDEWALK;
+        this.grass.x -= this.cameraScrollX * SCROLL_FACTOR.GRASS;
     }
     handleLeftReleased() {
     }
 
-    resetBody() {
-        const set = (part, xPx, yPx) => {
-            part.body.setTransform(pl.Vec2(px2m(xPx), px2m(yPx)), 0);
-            part.body.setLinearVelocity(pl.Vec2(0, 0));
-            part.body.setAngularVelocity(0);
-        };
-
-        set(this.head, originX + headOffset.x, originY + headOffset.y);
-        set(this.body, originX + backOffset.x, originY + backOffset.y);
-        set(this.pelvis, originX + pelvisOffset.x, originY + pelvisOffset.y);
-
-        set(this.rightThigh, originX + rightThighOffset.x, originY + rightThighOffset.y);
-        set(this.rightLeg, originX + rightLegOffset.x, originY + rightThighOffset.y);
-        set(this.rightFoot, originX + rightFootOffset.x, originY + rightFootOffset.y);
-
-        set(this.leftThigh, originX + leftThighOffset.x, originY + leftThighOffset.y);
-        set(this.leftLeg, originX + leftLegOffset.x, originY + leftLegOffset.y);
-        set(this.leftFoot, originX + leftFootOffset.x, originY + leftFootOffset.y);
-
-        set(this.upperRightArm, originX + upperRightArmOffset.x, originY + upperRightArmOffset.y);
-        set(this.lowerRightArm, originX + lowerRightArmOffset.x, originY + lowerRightArmOffset.y);
-        set(this.upperLeftArm, originX + upperLeftArmOffset.x, originY - upperRightArmOffset.y);
-        set(this.lowerLeftArm, originX + lowerLeftArmOffset.x, originY + lowerLeftArmOffset.y);
-
-        this.handleQReleased();
-        this.handleWReleased();
-        this.handleOReleased();
-        this.handlePReleased();
-
-        this.nowMs = Date.now();
-    }
-
     updateHud() {
-        const t = (Date.now() - this.nowMs) / 1000;
+        const t = ((Date.now() / 1000 - this.deltaTime / 1000));
         const vx = this.runner.head.body.getLinearVelocity().x;
         this.dist = (this.runner.body.sprite.x - originX) / PPM;
 
@@ -365,17 +304,20 @@ export default class MainScene extends Phaser.Scene {
         this.timeText.setText("Time Elapsed: " + (Math.round(t * 10) / 10) + " s");
         this.totalDistText.setText("Total Distance: " + Math.floor(this.totalDist) + " m");
         this.velocityText.setText("Velocity: " + (Math.round(this.velX * 10) / 10) + " m/s");
-        this.keyStateText.setText("Keystate: " + this.keyState);
+        //   this.keyStateText.setText("Keystate: " + this.keyState);
     }
+
     updateCamera(dt) {
         // Use horizontal velocity (QWOP-style movement)
-        this.cameraScrollX += this.runner.vx * dt;
+        //this.cameraScrollX += this.runner.vx * dt;
+        // console.log(this.runner.body.sprite);
     }
     update(_, deltaMs) {
+        this.deltaTime = deltaMs;
         this.runner.stepWorld(deltaMs / 1000);
         this.runner.syncSprites();
         this.updateHud();
-        this.updateCamera(deltaMs);
+        // this.updateCamera(deltaMs);
         const background = Math.floor(this.dist / 3);
         if (background > this.currentBackground && background < 20) {
             this.currentBackground = background;
@@ -384,7 +326,7 @@ export default class MainScene extends Phaser.Scene {
         }
 
         if (this.runner.head.sprite.y > this.groundYpx - 60) {
-            this.resetBody();
+            this.runner.resetBody();
         }
     }
 }

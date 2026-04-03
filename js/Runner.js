@@ -249,7 +249,6 @@ export class Runner {
                 }, this.rightLeg.body, this.rightFoot.body, v(originX - 10, originY + 172))
             )
         };
-
         this.leftSide = [
             this.upperLeftArm, this.lowerLeftArm,
             this.leftThigh, this.leftLeg, this.leftFoot
@@ -354,5 +353,37 @@ export class Runner {
         sync(this.rightThigh);
         sync(this.rightLeg);
         sync(this.rightFoot);
+    }
+
+    resetBody() {
+        const set = (part, xPx, yPx) => {
+            part.body.setTransform(pl.Vec2(px2m(xPx), px2m(yPx)), 0);
+            part.body.setLinearVelocity(pl.Vec2(0, 0));
+            part.body.setAngularVelocity(0);
+        };
+
+        set(this.head, originX + headOffset.x, originY + headOffset.y);
+        set(this.body, originX + backOffset.x, originY + backOffset.y);
+        set(this.pelvis, originX + pelvisOffset.x, originY + pelvisOffset.y);
+
+        set(this.rightThigh, originX + rightThighOffset.x, originY + rightThighOffset.y);
+        set(this.rightLeg, originX + rightLegOffset.x, originY + rightThighOffset.y);
+        set(this.rightFoot, originX + rightFootOffset.x, originY + rightFootOffset.y);
+
+        set(this.leftThigh, originX + leftThighOffset.x, originY + leftThighOffset.y);
+        set(this.leftLeg, originX + leftLegOffset.x, originY + leftLegOffset.y);
+        set(this.leftFoot, originX + leftFootOffset.x, originY + leftFootOffset.y);
+
+        set(this.upperRightArm, originX + upperRightArmOffset.x, originY + upperRightArmOffset.y);
+        set(this.lowerRightArm, originX + lowerRightArmOffset.x, originY + lowerRightArmOffset.y);
+        set(this.upperLeftArm, originX + upperLeftArmOffset.x, originY - upperRightArmOffset.y);
+        set(this.lowerLeftArm, originX + lowerLeftArmOffset.x, originY + lowerLeftArmOffset.y);
+
+        this.handleQReleased();
+        this.handleWReleased();
+        this.handleOReleased();
+        this.handlePReleased();
+
+        this.nowMs = Date.now();
     }
 }
