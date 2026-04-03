@@ -24,5 +24,5 @@ export const originX = W * .3;
 export const originY = 295;
 
 // --- Controls / tuning ---
-export const walkSpeed = 4;
-export const motorTorque = 420;
+export const WALK_SPEED = 4;
+export const MOTOR_TORQUE = 420;

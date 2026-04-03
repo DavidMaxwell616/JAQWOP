@@ -1,3 +1,4 @@
+import { MOTOR_TORQUE, originX, originY } from "./config.js";
 const pl = planck;
 const m2px = (m) => m * PPM;
 const px2m = (px) => px / PPM;
@@ -19,42 +20,39 @@ const PPM = 30;
  */
 
 
-const hipLimits = [0, 0];
-const pelvisLimits = [-0.6, 1.6];
-const kneeLimits = [0, 1.6];
-const ankleLimits = [-0.6, 0.6];
-const shoulderLimits = [-1.0, 1.0];
-const elbowLimits = [-1.2, 0.2];
-const lowerLeftArmOffset = { x: 0, y: 40 };
-const upperLeftArmOffset = { x: - 10, y: - 20 };
-const leftThighOffset = { x: 0, y: 70 };
-const leftFootOffset = { x: 10, y: 172 };
-const leftLegOffset = { x: -10, y: 140 };
-const rightFootOffset = { x: 10, y: 172 };
-const rightLegOffset = { x: -10, y: 140 };
-const rightThighOffset = { x: 0, y: 70 };
-const headOffset = { x: 0, y: -95 };
-const backOffset = { x: 0, y: 0 };
-const pelvisOffset = { x: 0, y: 0 };
-const lowerRightArmOffset = { x: 0, y: 40 };
-const upperRightArmOffset = { x: - 10, y: - 20 };
+// const hipLimits = [0, 0];
+// const pelvisLimits = [-0.6, 1.6];
+// const kneeLimits = [0, 1.6];
+// const ankleLimits = [-0.6, 0.6];
+// const shoulderLimits = [-1.0, 1.0];
+// const elbowLimits = [-1.2, 0.2];
+
 
 export class Runner {
-    constructor(scene, world, originX, originY, options = {}) {
-        this.scene = scene;
-        this.world = world;
-        this.originX = originX;
-        this.originY = originY;
+    constructor(scene) {
+        this.lowerLeftArmOffset = { x: 0, y: 40 };
+        this.upperLeftArmOffset = { x: - 10, y: - 20 };
+        this.leftThighOffset = { x: 0, y: 70 };
+        this.leftFootOffset = { x: 10, y: 172 };
+        this.leftLegOffset = { x: -10, y: 140 };
+        this.rightFootOffset = { x: 10, y: 172 };
+        this.rightLegOffset = { x: -10, y: 140 };
+        this.rightThighOffset = { x: 0, y: 70 };
+        this.headOffset = { x: 0, y: -95 };
+        this.backOffset = { x: 0, y: 0 };
+        this.pelvisOffset = { x: 0, y: 0 };
+        this.lowerRightArmOffset = { x: 0, y: 40 };
+        this.upperRightArmOffset = { x: - 10, y: - 20 };
 
-        const motorTorque = options.motorTorque ?? 140;
-        const shoulderLimits = options.shoulderLimits ?? [-1.8, 1.8];
-        const elbowLimits = options.elbowLimits ?? [-1.6, 0.2];
-        const hipLimits = options.hipLimits ?? [-0.5, 0.5];
-        const pelvisLimits = options.pelvisLimits ?? [-1.1, 1.1];
-        const kneeLimits = options.kneeLimits ?? [-0.1, 2.0];
-        const ankleLimits = options.ankleLimits ?? [-0.7, 0.7];
+        this.motorTorque = MOTOR_TORQUE ?? 140;
+        this.shoulderLimits = [-1.8, 1.8];
+        this.elbowLimits = [-1.6, 0.2];
+        this.hipLimits = [-0.5, 0.5];
+        this.pelvisLimits = [-1.1, 1.1];
+        this.kneeLimits = [-0.1, 2.0];
+        this.ankleLimits = [-0.7, 0.7];
 
-        const S = {
+        this.S = {
             body: { w: 71, h: 140 },
             pelvis: { w: 42, h: 42 },
             thigh: { w: 62, h: 80 },
@@ -65,7 +63,7 @@ export class Runner {
             head: { r: 35 }
         };
 
-        const offsets = {
+        this.offsets = {
             head: { x: 0, y: -110 },
             body: { x: 0, y: -20 },
             pelvis: { x: 0, y: 55 },
@@ -84,26 +82,26 @@ export class Runner {
             rightFoot: { x: 18, y: 238 }
         };
 
-        const v = (xPx, yPx) => pl.Vec2(px2m(xPx), px2m(yPx));
+        this.v = (xPx, yPx) => pl.Vec2(px2m(xPx), px2m(yPx));
 
         // Parts
         this.parts = {
-            head: this.makePartCircle("head", originX + offsets.head.x, originY + offsets.head.y, S.head.r, 0.8),
-            body: this.makePartRect("body", originX + offsets.body.x, originY + offsets.body.y, S.body.w, S.body.h, 1.2),
-            pelvis: this.makePartRect("pelvis", originX + offsets.pelvis.x, originY + offsets.pelvis.y, S.pelvis.w, S.pelvis.h, 1.2),
+            head: this.makePartCircle("head", originX + this.offsets.head.x, originY + this.offsets.head.y, this.S.head.r, 0.8),
+            body: this.makePartRect("body", originX + this.offsets.body.x, originY + this.offsets.body.y, this.S.body.w, this.S.body.h, 1.2),
+            pelvis: this.makePartRect("pelvis", originX + this.offsets.pelvis.x, originY + this.offsets.pelvis.y, this.S.pelvis.w, this.S.pelvis.h, 1.2),
 
-            upperLeftArm: this.makePartRect("upperArm", originX + offsets.upperLeftArm.x, originY + offsets.upperLeftArm.y, S.upperArm.w, S.upperArm.h),
-            lowerLeftArm: this.makePartRect("lowerArm", originX + offsets.lowerLeftArm.x, originY + offsets.lowerLeftArm.y, S.lowerArm.w, S.lowerArm.h),
-            upperRightArm: this.makePartRect("upperArm", originX + offsets.upperRightArm.x, originY + offsets.upperRightArm.y, S.upperArm.w, S.upperArm.h),
-            lowerRightArm: this.makePartRect("lowerArm", originX + offsets.lowerRightArm.x, originY + offsets.lowerRightArm.y, S.lowerArm.w, S.lowerArm.h),
+            upperLeftArm: this.makePartRect("upperArm", originX + this.offsets.upperLeftArm.x, originY + this.offsets.upperLeftArm.y, this.S.upperArm.w, this.S.upperArm.h),
+            lowerLeftArm: this.makePartRect("lowerArm", originX + this.offsets.lowerLeftArm.x, originY + this.offsets.lowerLeftArm.y, this.S.lowerArm.w, this.S.lowerArm.h),
+            upperRightArm: this.makePartRect("upperArm", originX + this.offsets.upperRightArm.x, originY + this.offsets.upperRightArm.y, this.S.upperArm.w, this.S.upperArm.h),
+            lowerRightArm: this.makePartRect("lowerArm", originX + this.offsets.lowerRightArm.x, originY + this.offsets.lowerRightArm.y, this.S.lowerArm.w, this.S.lowerArm.h),
 
-            leftThigh: this.makePartRect("thigh", originX + offsets.leftThigh.x, originY + offsets.leftThigh.y, S.thigh.w, S.thigh.h),
-            leftLeg: this.makePartRect("leg", originX + offsets.leftLeg.x, originY + offsets.leftLeg.y, S.leg.w, S.leg.h),
-            leftFoot: this.makePartRect("foot", originX + offsets.leftFoot.x, originY + offsets.leftFoot.y, S.foot.w, S.foot.h),
+            leftThigh: this.makePartRect("thigh", originX + this.offsets.leftThigh.x, originY + this.offsets.leftThigh.y, this.S.thigh.w, this.S.thigh.h),
+            leftLeg: this.makePartRect("leg", originX + this.offsets.leftLeg.x, originY + this.offsets.leftLeg.y, this.S.leg.w, this.S.leg.h),
+            leftFoot: this.makePartRect("foot", originX + this.offsets.leftFoot.x, originY + this.offsets.leftFoot.y, this.S.foot.w, this.S.foot.h),
 
-            rightThigh: this.makePartRect("thigh", originX + offsets.rightThigh.x, originY + offsets.rightThigh.y, S.thigh.w, S.thigh.h),
-            rightLeg: this.makePartRect("leg", originX + offsets.rightLeg.x, originY + offsets.rightLeg.y, S.leg.w, S.leg.h),
-            rightFoot: this.makePartRect("foot", originX + offsets.rightFoot.x, originY + offsets.rightFoot.y, S.foot.w, S.foot.h)
+            rightThigh: this.makePartRect("thigh", originX + this.offsets.rightThigh.x, originY + this.offsets.rightThigh.y, this.S.thigh.w, this.S.thigh.h),
+            rightLeg: this.makePartRect("leg", originX + this.offsets.rightLeg.x, originY + this.offsets.rightLeg.y, this.S.leg.w, this.S.leg.h),
+            rightFoot: this.makePartRect("foot", originX + this.offsets.rightFoot.x, originY + this.offsets.rightFoot.y, this.S.foot.w, this.S.foot.h)
         };
 
         // Aliases for convenience
@@ -271,6 +269,32 @@ export class Runner {
     makePartCircle(name, x, y, r, density = 1) {
         // replace with your actual implementation
         return this.scene.makePartCircle(name, x, y, r, density);
+    }
+
+    makePartCircle(key, xPx, yPx, rPx, density = 1.0, friction = 0.6, restitution = 0.1) {
+        const body = this.world.createBody({
+            type: "dynamic",
+            position: pl.Vec2(px2m(xPx), px2m(yPx)),
+            angle: 0,
+            linearDamping: 0.05,
+            angularDamping: 0.10
+        });
+
+        const fix = body.createFixture(pl.Circle(px2m(rPx)), {
+            density, friction, restitution
+        });
+
+        fix.setFilterData({
+            categoryBits: CATEGORY_BODYPARTS,
+            maskBits: MASK_BODYPARTS,
+            groupIndex: 0
+        });
+
+        const sprite = this.add.image(xPx, yPx, key).setOrigin(0.5);
+        sprite.setDisplaySize(rPx * 2, rPx * 2);
+        sprite._pbody = body;
+
+        return { body, sprite, fix };
     }
 
     setDebugVisible(visible) {

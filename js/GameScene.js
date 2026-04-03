@@ -1,5 +1,5 @@
 import { Runner } from "./Runner.js";
-import { SCROLL_FACTOR, LAYER_HEIGHT, originX, originY, PPM, px2m } from "./config.js";
+import { SCROLL_FACTOR, LAYER_HEIGHT, originX, originY, PPM, px2m, WALK_SPEED } from "./config.js";
 
 
 // --- Categories / masks (FIXED) ---
@@ -10,8 +10,6 @@ const CATEGORY_GROUND = 0x0004;
 const MASK_BODYPARTS = CATEGORY_GROUND;
 const MASK_GROUND = CATEGORY_BODYPARTS;
 const pl = planck;
-
-
 
 export default class MainScene extends Phaser.Scene {
     constructor() { super("main"); }
@@ -175,38 +173,12 @@ export default class MainScene extends Phaser.Scene {
         return { body, sprite, fix };
     }
 
-    makePartCircle(key, xPx, yPx, rPx, density = 1.0, friction = 0.6, restitution = 0.1) {
-        const body = this.world.createBody({
-            type: "dynamic",
-            position: pl.Vec2(px2m(xPx), px2m(yPx)),
-            angle: 0,
-            linearDamping: 0.05,
-            angularDamping: 0.10
-        });
-
-        const fix = body.createFixture(pl.Circle(px2m(rPx)), {
-            density, friction, restitution
-        });
-
-        fix.setFilterData({
-            categoryBits: CATEGORY_BODYPARTS,
-            maskBits: MASK_BODYPARTS,
-            groupIndex: 0
-        });
-
-        const sprite = this.add.image(xPx, yPx, key).setOrigin(0.5);
-        sprite.setDisplaySize(rPx * 2, rPx * 2);
-        sprite._pbody = body;
-
-        return { body, sprite, fix };
-    }
-
     // --- controls ---
     handleQPressed() {
-        this.runner.joints.rightHipLeg.setMotorSpeed(-walkSpeed);
-        this.runner.joints.leftHipLeg.setMotorSpeed(+walkSpeed);
-        this.runner.joints.leftShoulder.setMotorSpeed(+walkSpeed);
-        this.runner.joints.rightShoulder.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightHipLeg.setMotorSpeed(-WALK_SPEED);
+        this.runner.joints.leftHipLeg.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.leftShoulder.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.rightShoulder.setMotorSpeed(-WALK_SPEED);
         this.keyState = "Q";
     }
     handleQReleased() {
@@ -219,12 +191,12 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handleOPressed() {
-        this.runner.joints.leftKnee.setMotorSpeed(+walkSpeed);
-        this.runner.joints.rightKnee.setMotorSpeed(-walkSpeed);
+        this.runner.joints.leftKnee.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.rightKnee.setMotorSpeed(-WALK_SPEED);
         this.runner.joints.rightElbow.enableMotor(true);
         this.runner.joints.leftElbow.enableMotor(true);
-        this.runner.joints.rightElbow.setMotorSpeed(+walkSpeed);
-        this.runner.joints.leftElbow.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightElbow.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.leftElbow.setMotorSpeed(-WALK_SPEED);
         this.keyState = "O";
     }
     handleOReleased() {
@@ -238,11 +210,11 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handleWPressed() {
-        this.runner.joints.rightHipLeg.setMotorSpeed(+walkSpeed);
-        this.runner.joints.leftHipLeg.setMotorSpeed(-walkSpeed);
-        this.runner.joints.hipBack.setMotorSpeed(+walkSpeed);
-        this.runner.joints.rightShoulder.setMotorSpeed(+walkSpeed);
-        this.runner.joints.leftShoulder.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightHipLeg.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.leftHipLeg.setMotorSpeed(-WALK_SPEED);
+        this.runner.joints.hipBack.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.rightShoulder.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.leftShoulder.setMotorSpeed(-WALK_SPEED);
         this.keyState = "W";
     }
     handleWReleased() {
@@ -255,12 +227,12 @@ export default class MainScene extends Phaser.Scene {
     }
 
     handlePPressed() {
-        this.runner.joints.rightKnee.setMotorSpeed(+walkSpeed);
-        this.runner.joints.leftKnee.setMotorSpeed(-walkSpeed);
+        this.runner.joints.rightKnee.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.leftKnee.setMotorSpeed(-WALK_SPEED);
         this.runner.joints.leftElbow.enableMotor(true);
         this.runner.joints.rightElbow.enableMotor(true);
-        this.runner.joints.leftElbow.setMotorSpeed(+walkSpeed);
-        this.runner.joints.rightElbow.setMotorSpeed(-walkSpeed);
+        this.runner.joints.leftElbow.setMotorSpeed(+WALK_SPEED);
+        this.runner.joints.rightElbow.setMotorSpeed(-WALK_SPEED);
         this.keyState = "P";
     }
     handlePReleased() {
