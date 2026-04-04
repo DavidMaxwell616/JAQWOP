@@ -84,17 +84,17 @@ export class Runner {
             pelvis: { x: 0, y: 55 },
 
             upperLeftArm: { x: 0, y: -25 },
-            lowerLeftArm: { x: -50, y: 35 },
+            lowerLeftArm: { x: 0, y: 35 },
             upperRightArm: { x: 0, y: -25 },
-            lowerRightArm: { x: 50, y: 35 },
+            lowerRightArm: { x: 0, y: 35 },
 
-            leftThigh: { x: -18, y: 105 },
-            leftLeg: { x: -18, y: 185 },
-            leftFoot: { x: -18, y: 238 },
+            leftThigh: { x: 0, y: 105 },
+            leftLeg: { x: 0, y: 185 },
+            leftFoot: { x: 0, y: 238 },
 
-            rightThigh: { x: 18, y: 105 },
-            rightLeg: { x: 18, y: 185 },
-            rightFoot: { x: 18, y: 238 }
+            rightThigh: { x: 0, y: 105 },
+            rightLeg: { x: 0, y: 185 },
+            rightFoot: { x: 0, y: 238 }
         };
 
         this.v = (xPx, yPx) => pl.Vec2(px2m(xPx), px2m(yPx));
@@ -102,21 +102,22 @@ export class Runner {
         // Parts
         this.parts = {
             head: this.makePartCircle("head", originX + this.offsets.head.x, originY + this.offsets.head.y, this.S.head.r, 0.8),
-            body: this.makePartRect("body", originX + this.offsets.body.x, originY + this.offsets.body.y, this.S.body.w, this.S.body.h, 1.2),
             pelvis: this.makePartRect("pelvis", originX + this.offsets.pelvis.x, originY + this.offsets.pelvis.y, this.S.pelvis.w, this.S.pelvis.h, 1.2),
-
             upperLeftArm: this.makePartRect("upperArm", originX + this.offsets.upperLeftArm.x, originY + this.offsets.upperLeftArm.y, this.S.upperArm.w, this.S.upperArm.h),
             lowerLeftArm: this.makePartRect("lowerArm", originX + this.offsets.lowerLeftArm.x, originY + this.offsets.lowerLeftArm.y, this.S.lowerArm.w, this.S.lowerArm.h),
-            upperRightArm: this.makePartRect("upperArm", originX + this.offsets.upperRightArm.x, originY + this.offsets.upperRightArm.y, this.S.upperArm.w, this.S.upperArm.h),
-            lowerRightArm: this.makePartRect("lowerArm", originX + this.offsets.lowerRightArm.x, originY + this.offsets.lowerRightArm.y, this.S.lowerArm.w, this.S.lowerArm.h),
-
             leftThigh: this.makePartRect("thigh", originX + this.offsets.leftThigh.x, originY + this.offsets.leftThigh.y, this.S.thigh.w, this.S.thigh.h),
             leftLeg: this.makePartRect("leg", originX + this.offsets.leftLeg.x, originY + this.offsets.leftLeg.y, this.S.leg.w, this.S.leg.h),
             leftFoot: this.makePartRect("foot", originX + this.offsets.leftFoot.x, originY + this.offsets.leftFoot.y, this.S.foot.w, this.S.foot.h),
 
             rightThigh: this.makePartRect("thigh", originX + this.offsets.rightThigh.x, originY + this.offsets.rightThigh.y, this.S.thigh.w, this.S.thigh.h),
             rightLeg: this.makePartRect("leg", originX + this.offsets.rightLeg.x, originY + this.offsets.rightLeg.y, this.S.leg.w, this.S.leg.h),
-            rightFoot: this.makePartRect("foot", originX + this.offsets.rightFoot.x, originY + this.offsets.rightFoot.y, this.S.foot.w, this.S.foot.h)
+            rightFoot: this.makePartRect("foot", originX + this.offsets.rightFoot.x, originY + this.offsets.rightFoot.y, this.S.foot.w, this.S.foot.h),
+
+            body: this.makePartRect("body", originX + this.offsets.body.x, originY + this.offsets.body.y, this.S.body.w, this.S.body.h, 1.2),
+
+            upperRightArm: this.makePartRect("upperArm", originX + this.offsets.upperRightArm.x, originY + this.offsets.upperRightArm.y, this.S.upperArm.w, this.S.upperArm.h),
+            lowerRightArm: this.makePartRect("lowerArm", originX + this.offsets.lowerRightArm.x, originY + this.offsets.lowerRightArm.y, this.S.lowerArm.w, this.S.lowerArm.h),
+
         };
 
         // Aliases for convenience

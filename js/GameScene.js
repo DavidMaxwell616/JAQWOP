@@ -110,15 +110,13 @@ export default class MainScene extends Phaser.Scene {
         this.totalDistText = this.add.text(5, 40, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
         this.velocityText = this.add.text(500, 40, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
         //   this.keyStateText = this.add.text(50, 90, "", font).setShadow(shX, shY, shCol, shBlur, shStroke, shFill);
-
+        this.prevRunnerX = this.runner.body.sprite.x;
         // --- input ---
         this.keys = this.input.keyboard.addKeys({
             Q: Phaser.Input.Keyboard.KeyCodes.Q,
             W: Phaser.Input.Keyboard.KeyCodes.W,
             O: Phaser.Input.Keyboard.KeyCodes.O,
             P: Phaser.Input.Keyboard.KeyCodes.P,
-            RIGHT: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-            LEFT: Phaser.Input.Keyboard.KeyCodes.LEFT,
             SPACE: Phaser.Input.Keyboard.KeyCodes.SPACE,
         });
 
@@ -133,11 +131,6 @@ export default class MainScene extends Phaser.Scene {
 
         this.keys.P.on("down", () => this.handlePPressed());
         this.keys.P.on("up", () => this.handlePReleased());
-
-        this.keys.LEFT.on("down", () => this.handleLeftPressed());
-        this.keys.LEFT.on("up", () => this.handleLeftReleased());
-        this.keys.RIGHT.on("down", () => this.handleRightPressed());
-        this.keys.RIGHT.on("up", () => this.handleRightReleased());
 
         this.keys.SPACE.on("down", () => this.runner.resetBody());
     }
@@ -241,24 +234,6 @@ export default class MainScene extends Phaser.Scene {
         this.keyState = "";
     }
 
-    handleRightPressed() {
-        this.runner.x++;
-        this.houses.x += this.cameraScrollX * SCROLL_FACTOR.HOUSES;
-        this.foliage.x += this.cameraScrollX * SCROLL_FACTOR.FOLIAGE;
-        this.sidewalk.x += this.cameraScrollX * SCROLL_FACTOR.SIDEWALK;
-        this.grass.x += this.cameraScrollX * SCROLL_FACTOR.GRASS;
-    }
-    handleRightReleased() {
-    }
-    handleLeftPressed() {
-        this.houses.x -= this.cameraScrollX * SCROLL_FACTOR.HOUSES;
-        this.foliage.x -= this.cameraScrollX * SCROLL_FACTOR.FOLIAGE;
-        this.sidewalk.x -= this.cameraScrollX * SCROLL_FACTOR.SIDEWALK;
-        this.grass.x -= this.cameraScrollX * SCROLL_FACTOR.GRASS;
-    }
-    handleLeftReleased() {
-    }
-
     updateHud() {
         const t = ((Date.now() / 1000 - this.deltaTime / 1000));
         const vx = this.runner.head.body.getLinearVelocity().x;
@@ -275,17 +250,24 @@ export default class MainScene extends Phaser.Scene {
         //   this.keyStateText.setText("Keystate: " + this.keyState);
     }
 
-    updateCamera(dt) {
-        // Use horizontal velocity (QWOP-style movement)
-        //this.cameraScrollX += this.runner.vx * dt;
-        // console.log(this.runner.body.sprite);
+    updateCamera() {
+        const runnerX = this.runner.body.sprite.x;
+        const dx = runnerX - this.prevRunnerX;
+        this.prevRunnerX = runnerX;
+
+        this.houses.x -= dx * SCROLL_FACTOR.HOUSES;
+        this.fence.x -= dx * SCROLL_FACTOR.FENCE;
+        this.foliage.x -= dx * SCROLL_FACTOR.FOLIAGE;
+        this.sidewalk.x -= dx * SCROLL_FACTOR.SIDEWALK;
+        this.grass.x -= dx * SCROLL_FACTOR.GRASS;
     }
+
     update(_, deltaMs) {
         this.deltaTime = deltaMs;
         this.runner.stepWorld(deltaMs / 1000);
         this.runner.syncSprites();
         this.updateHud();
-        // this.updateCamera(deltaMs);
+        this.updateCamera();
         const background = Math.floor(this.dist / 3);
         if (background > this.currentBackground && background < 20) {
             this.currentBackground = background;
