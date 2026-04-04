@@ -1,4 +1,4 @@
-import { MOTOR_TORQUE, originX, originY } from "./config.js";
+import { MOTOR_TORQUE, originX, originY, CATEGORY_BODYPARTS, MASK_BODYPARTS } from "./config.js";
 const pl = planck;
 const m2px = (m) => m * PPM;
 const px2m = (px) => px / PPM;
@@ -29,7 +29,9 @@ const PPM = 30;
 
 
 export class Runner {
-    constructor(scene) {
+    constructor(scene, world) {
+        this.scene = scene;
+        this.world = world;
         this.lowerLeftArmOffset = { x: 0, y: 40 };
         this.upperLeftArmOffset = { x: - 10, y: - 20 };
         this.leftThighOffset = { x: 0, y: 70 };
@@ -51,7 +53,20 @@ export class Runner {
         this.pelvisLimits = [-1.1, 1.1];
         this.kneeLimits = [-0.1, 2.0];
         this.ankleLimits = [-0.7, 0.7];
-
+        this._accum = 0;
+        this.targets = {
+            hipBack: 0,
+            leftHip: 0.2,
+            rightHip: 0.2,
+            leftKnee: 0.6,
+            rightKnee: 0.6,
+            leftAnkle: 0,
+            rightAnkle: 0,
+            leftShoulder: 0.2,
+            rightShoulder: 0.2,
+            leftElbow: 1.0,
+            rightElbow: 1.0
+        };
         this.S = {
             body: { w: 71, h: 140 },
             pelvis: { w: 42, h: 42 },
@@ -68,9 +83,9 @@ export class Runner {
             body: { x: 0, y: -20 },
             pelvis: { x: 0, y: 55 },
 
-            upperLeftArm: { x: -42, y: -25 },
+            upperLeftArm: { x: 0, y: -25 },
             lowerLeftArm: { x: -50, y: 35 },
-            upperRightArm: { x: 42, y: -25 },
+            upperRightArm: { x: 0, y: -25 },
             lowerRightArm: { x: 50, y: 35 },
 
             leftThigh: { x: -18, y: 105 },
@@ -124,127 +139,127 @@ export class Runner {
         // Joints
         this.joints = {
             neck: this.world.createJoint(
-                pl.WeldJoint({}, this.head.body, this.body.body, v(originX, originY - 35))
+                pl.WeldJoint({}, this.head.body, this.body.body, this.v(originX, originY - 35))
             ),
 
             leftShoulder: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.7,
+                    maxMotorTorque: this.motorTorque * 0.7,
                     enableLimit: true,
-                    lowerAngle: shoulderLimits[0],
-                    upperAngle: shoulderLimits[1]
-                }, this.upperLeftArm.body, this.body.body, v(originX, originY - 40))
+                    lowerAngle: this.shoulderLimits[0],
+                    upperAngle: this.shoulderLimits[1]
+                }, this.upperLeftArm.body, this.body.body, this.v(originX, originY - 40))
             ),
 
             rightShoulder: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.7,
+                    maxMotorTorque: this.motorTorque * 0.7,
                     enableLimit: true,
-                    lowerAngle: shoulderLimits[0],
-                    upperAngle: shoulderLimits[1]
-                }, this.upperRightArm.body, this.body.body, v(originX, originY - 40))
+                    lowerAngle: this.shoulderLimits[0],
+                    upperAngle: this.shoulderLimits[1]
+                }, this.upperRightArm.body, this.body.body, this.v(originX, originY - 40))
             ),
 
             leftElbow: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: false,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.5,
+                    maxMotorTorque: this.motorTorque * 0.5,
                     enableLimit: true,
-                    lowerAngle: elbowLimits[0],
-                    upperAngle: elbowLimits[1]
-                }, this.upperLeftArm.body, this.lowerLeftArm.body, v(originX, originY + 10))
+                    lowerAngle: this.elbowLimits[0],
+                    upperAngle: this.elbowLimits[1]
+                }, this.upperLeftArm.body, this.lowerLeftArm.body, this.v(originX, originY + 10))
             ),
 
             rightElbow: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: false,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.5,
+                    maxMotorTorque: this.motorTorque * 0.5,
                     enableLimit: true,
-                    lowerAngle: elbowLimits[0],
-                    upperAngle: elbowLimits[1]
-                }, this.upperRightArm.body, this.lowerRightArm.body, v(originX, originY + 10))
+                    lowerAngle: this.elbowLimits[0],
+                    upperAngle: this.elbowLimits[1]
+                }, this.upperRightArm.body, this.lowerRightArm.body, this.v(originX, originY + 10))
             ),
 
             hipBack: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque,
+                    maxMotorTorque: this.motorTorque,
                     enableLimit: true,
-                    lowerAngle: hipLimits[0],
-                    upperAngle: hipLimits[1]
-                }, this.body.body, this.pelvis.body, v(originX, originY + 20))
+                    lowerAngle: this.hipLimits[0],
+                    upperAngle: this.hipLimits[1]
+                }, this.body.body, this.pelvis.body, this.v(originX, originY + 20))
             ),
 
             leftHipLeg: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque,
+                    maxMotorTorque: this.motorTorque,
                     enableLimit: true,
-                    lowerAngle: pelvisLimits[0],
-                    upperAngle: pelvisLimits[1]
-                }, this.pelvis.body, this.leftThigh.body, v(originX - 10, originY + 50))
+                    lowerAngle: this.pelvisLimits[0],
+                    upperAngle: this.pelvisLimits[1]
+                }, this.pelvis.body, this.leftThigh.body, this.v(originX - 10, originY + 50))
             ),
             rightHipLeg: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque,
+                    maxMotorTorque: this.motorTorque,
                     enableLimit: true,
-                    lowerAngle: pelvisLimits[0],
-                    upperAngle: pelvisLimits[1]
-                }, this.pelvis.body, this.rightThigh.body, v(originX + 10, originY + 50))
+                    lowerAngle: this.pelvisLimits[0],
+                    upperAngle: this.pelvisLimits[1]
+                }, this.pelvis.body, this.rightThigh.body, this.v(originX + 10, originY + 50))
             ),
 
             leftKnee: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque,
+                    maxMotorTorque: this.motorTorque,
                     enableLimit: true,
-                    lowerAngle: kneeLimits[0],
-                    upperAngle: kneeLimits[1]
-                }, this.leftThigh.body, this.leftLeg.body, v(originX, originY + 110))
+                    lowerAngle: this.kneeLimits[0],
+                    upperAngle: this.kneeLimits[1]
+                }, this.leftThigh.body, this.leftLeg.body, this.v(originX, originY + 110))
             ),
 
             rightKnee: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque,
+                    maxMotorTorque: this.motorTorque,
                     enableLimit: true,
-                    lowerAngle: kneeLimits[0],
-                    upperAngle: kneeLimits[1]
-                }, this.rightThigh.body, this.rightLeg.body, v(originX, originY + 120))
+                    lowerAngle: this.kneeLimits[0],
+                    upperAngle: this.kneeLimits[1]
+                }, this.rightThigh.body, this.rightLeg.body, this.v(originX, originY + 120))
             ),
 
             leftAnkle: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.7,
+                    maxMotorTorque: this.motorTorque * 0.7,
                     enableLimit: true,
-                    lowerAngle: ankleLimits[0],
-                    upperAngle: ankleLimits[1]
-                }, this.leftLeg.body, this.leftFoot.body, v(originX - 10, originY + 172))
+                    lowerAngle: this.ankleLimits[0],
+                    upperAngle: this.ankleLimits[1]
+                }, this.leftLeg.body, this.leftFoot.body, this.v(originX - 10, originY + 172))
             ),
 
             rightAnkle: this.world.createJoint(
                 pl.RevoluteJoint({
                     enableMotor: true,
                     motorSpeed: 0,
-                    maxMotorTorque: motorTorque * 0.7,
+                    maxMotorTorque: this.motorTorque * 0.7,
                     enableLimit: true,
-                    lowerAngle: ankleLimits[0],
-                    upperAngle: ankleLimits[1]
-                }, this.rightLeg.body, this.rightFoot.body, v(originX - 10, originY + 172))
+                    lowerAngle: this.ankleLimits[0],
+                    upperAngle: this.ankleLimits[1]
+                }, this.rightLeg.body, this.rightFoot.body, this.v(originX - 10, originY + 172))
             )
         };
         this.leftSide = [
@@ -290,7 +305,7 @@ export class Runner {
             groupIndex: 0
         });
 
-        const sprite = this.add.image(xPx, yPx, key).setOrigin(0.5);
+        const sprite = this.scene.add.image(xPx, yPx, key).setOrigin(0.5);
         sprite.setDisplaySize(rPx * 2, rPx * 2);
         sprite._pbody = body;
 
@@ -318,7 +333,7 @@ export class Runner {
     stepWorld(dtSec) {
         const fixed = 1 / 60;
         dtSec = Math.min(dtSec, 1 / 30); // clamp spikes harder
-
+        this.body.body.applyForceToCenter(pl.Vec2(2, 0), true);
         this._accum += dtSec;
 
         const velIters = 20;
@@ -333,22 +348,22 @@ export class Runner {
     applyPoseHold() {
         if (!this.poseHoldEnabled) return;
 
-        this.driveJointToAngle(this.hipBack, this.targets.hipBack, 10, 2.2, 6);
+        this.driveJointToAngle(this.joints.hipBack, this.targets.hipBack, 10, 2.2, 6);
 
-        this.driveJointToAngle(this.leftHipLeg, this.targets.leftHip, 8, 1.6, 5);
-        this.driveJointToAngle(this.rightHipLeg, this.targets.rightHip, 8, 1.6, 5);
+        this.driveJointToAngle(this.joints.leftHipLeg, this.targets.leftHip, 8, 1.6, 5);
+        this.driveJointToAngle(this.joints.rightHipLeg, this.targets.rightHip, 8, 1.6, 5);
 
-        this.driveJointToAngle(this.leftKnee, this.targets.leftKnee, 9, 1.8, 5);
-        this.driveJointToAngle(this.rightKnee, this.targets.rightKnee, 9, 1.8, 5);
+        this.driveJointToAngle(this.joints.leftKnee, this.targets.leftKnee, 9, 1.8, 5);
+        this.driveJointToAngle(this.joints.rightKnee, this.targets.rightKnee, 9, 1.8, 5);
 
-        this.driveJointToAngle(this.leftAnkle, this.targets.leftAnkle, 8, 1.5, 5);
-        this.driveJointToAngle(this.rightAnkle, this.targets.rightAnkle, 8, 1.5, 5);
+        this.driveJointToAngle(this.joints.leftAnkle, this.targets.leftAnkle, 8, 1.5, 5);
+        this.driveJointToAngle(this.joints.rightAnkle, this.targets.rightAnkle, 8, 1.5, 5);
 
-        this.driveJointToAngle(this.leftShoulder, this.targets.leftShoulder, 5, 1.0, 4);
-        this.driveJointToAngle(this.rightShoulder, this.targets.rightShoulder, 5, 1.0, 4);
+        this.driveJointToAngle(this.joints.leftShoulder, this.targets.leftShoulder, 5, 1.0, 4);
+        this.driveJointToAngle(this.joints.rightShoulder, this.targets.rightShoulder, 5, 1.0, 4);
 
-        this.driveJointToAngle(this.leftElbow, this.targets.leftElbow, 4, 0.8, 3);
-        this.driveJointToAngle(this.rightElbow, this.targets.rightElbow, 4, 0.8, 3);
+        this.driveJointToAngle(this.joints.leftElbow, this.targets.leftElbow, 4, 0.8, 3);
+        this.driveJointToAngle(this.joints.rightElbow, this.targets.rightElbow, 4, 0.8, 3);
     }
     driveJointToAngle(joint, targetAngle, stiffness = 8, damping = 1.5, maxSpeed = 6) {
         const angleError = targetAngle - joint.getJointAngle();
@@ -386,27 +401,27 @@ export class Runner {
             part.body.setAngularVelocity(0);
         };
 
-        set(this.head, originX + headOffset.x, originY + headOffset.y);
-        set(this.body, originX + backOffset.x, originY + backOffset.y);
-        set(this.pelvis, originX + pelvisOffset.x, originY + pelvisOffset.y);
+        set(this.head, originX + this.headOffset.x, originY + this.headOffset.y);
+        set(this.body, originX + this.backOffset.x, originY + this.backOffset.y);
+        set(this.pelvis, originX + this.pelvisOffset.x, originY + this.pelvisOffset.y);
 
-        set(this.rightThigh, originX + rightThighOffset.x, originY + rightThighOffset.y);
-        set(this.rightLeg, originX + rightLegOffset.x, originY + rightThighOffset.y);
-        set(this.rightFoot, originX + rightFootOffset.x, originY + rightFootOffset.y);
+        set(this.rightThigh, originX + this.rightThighOffset.x, originY + this.rightThighOffset.y);
+        set(this.rightLeg, originX + this.rightLegOffset.x, originY + this.rightThighOffset.y);
+        set(this.rightFoot, originX + this.rightFootOffset.x, originY + this.rightFootOffset.y);
 
-        set(this.leftThigh, originX + leftThighOffset.x, originY + leftThighOffset.y);
-        set(this.leftLeg, originX + leftLegOffset.x, originY + leftLegOffset.y);
-        set(this.leftFoot, originX + leftFootOffset.x, originY + leftFootOffset.y);
+        set(this.leftThigh, originX + this.leftThighOffset.x, originY + this.leftThighOffset.y);
+        set(this.leftLeg, originX + this.leftLegOffset.x, originY + this.leftLegOffset.y);
+        set(this.leftFoot, originX + this.leftFootOffset.x, originY + this.leftFootOffset.y);
 
-        set(this.upperRightArm, originX + upperRightArmOffset.x, originY + upperRightArmOffset.y);
-        set(this.lowerRightArm, originX + lowerRightArmOffset.x, originY + lowerRightArmOffset.y);
-        set(this.upperLeftArm, originX + upperLeftArmOffset.x, originY - upperRightArmOffset.y);
-        set(this.lowerLeftArm, originX + lowerLeftArmOffset.x, originY + lowerLeftArmOffset.y);
+        set(this.upperRightArm, originX + this.upperRightArmOffset.x, originY + this.upperRightArmOffset.y);
+        set(this.lowerRightArm, originX + this.lowerRightArmOffset.x, originY + this.lowerRightArmOffset.y);
+        set(this.upperLeftArm, originX + this.upperLeftArmOffset.x, originY - this.upperRightArmOffset.y);
+        set(this.lowerLeftArm, originX + this.lowerLeftArmOffset.x, originY + this.lowerLeftArmOffset.y);
 
-        this.handleQReleased();
-        this.handleWReleased();
-        this.handleOReleased();
-        this.handlePReleased();
+        this.scene.handleQReleased();
+        this.scene.handleWReleased();
+        this.scene.handleOReleased();
+        this.scene.handlePReleased();
 
         this.nowMs = Date.now();
     }

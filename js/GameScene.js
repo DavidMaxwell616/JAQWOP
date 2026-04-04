@@ -1,14 +1,10 @@
 import { Runner } from "./Runner.js";
-import { SCROLL_FACTOR, LAYER_HEIGHT, originX, originY, PPM, px2m, WALK_SPEED } from "./config.js";
+import { SCROLL_FACTOR, LAYER_HEIGHT, originX, PPM, px2m, WALK_SPEED, CATEGORY_GROUND, MASK_GROUND, CATEGORY_BODYPARTS, MASK_BODYPARTS } from "./config.js";
 
 
 // --- Categories / masks (FIXED) ---
 // Bodyparts collide ONLY with ground (no self-collision between limbs)
-const CATEGORY_BODYPARTS = 0x0002;
-const CATEGORY_GROUND = 0x0004;
 
-const MASK_BODYPARTS = CATEGORY_GROUND;
-const MASK_GROUND = CATEGORY_BODYPARTS;
 const pl = planck;
 
 export default class MainScene extends Phaser.Scene {
@@ -99,7 +95,7 @@ export default class MainScene extends Phaser.Scene {
 
 
         // --- Build ragdoll ---
-        this.runner = new Runner(this, this.world, originX, originY);
+        this.runner = new Runner(this, this.world);
         this.runner.applyPoseHold();
         // --- UI ---
         const font = { fontFamily: "Impact", fontSize: "30px", color: "#faa662", fontWeight: 'bold' };
